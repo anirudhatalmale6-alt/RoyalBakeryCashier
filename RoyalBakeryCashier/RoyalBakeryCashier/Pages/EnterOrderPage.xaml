@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RoyalBakeryCashier.Pages.EnterOrderPage"
+             Title="Enter Order">
+    <VerticalStackLayout Padding="20" Spacing="12">
+
+        <Label Text="Lookup Order"
+               FontAttributes="Bold"
+               FontSize="18"
+               HorizontalOptions="Center" />
+
+        <Frame CornerRadius="8" Padding="10" BackgroundColor="{DynamicResource PageBackgroundColor}">
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Order ID" />
+                <Entry Text="{Binding OrderId, Mode=TwoWay}"
+                       Placeholder="Enter or scan order id"
+                       Keyboard="Numeric"
+                       ClearButtonVisibility="WhileEditing" />
+
+                <HorizontalStackLayout Spacing="8" HorizontalOptions="Center">
+                    <Button Text="Submit"
+                            Command="{Binding SubmitCommand}"
+                            WidthRequest="140" />
+                    <Button Text="Simulate Scan"
+                            Command="{Binding SimulateScanCommand}"
+                            WidthRequest="140" />
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
+        </Frame>
+
+        <Label Text="{Binding StatusMessage}"
+               TextColor="Gray"
+               HorizontalOptions="Center"
+               LineBreakMode="TailTruncation" />
+
+        <BoxView HeightRequest="1" Color="#EEE" Margin="0,8,0,0" />
+
+        <!-- Placeholder for future quick actions / history -->
+        <Label Text="Recent orders / actions can appear here"
+               FontAttributes="Italic"
+               FontSize="12"
+               TextColor="#888"
+               HorizontalOptions="Center" />
+
+    </VerticalStackLayout>
+</ContentPage>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RoyalBakeryCashier.Pages.PaymentPopupPage"
+             Title="Payment"
+             Padding="16">
+    <VerticalStackLayout Spacing="12">
+        <Label Text="Payment" FontSize="20" FontAttributes="Bold" HorizontalOptions="Center"/>
+
+        <Label Text="Method" FontAttributes="Bold"/>
+        <HorizontalStackLayout Spacing="8">
+            <RadioButton x:Name="CashRadio" Content="Cash" GroupName="method" IsChecked="True"/>
+            <RadioButton x:Name="CardRadio" Content="Card" GroupName="method"/>
+        </HorizontalStackLayout>
+
+        <Label Text="Tender amount" FontAttributes="Bold"/>
+        <Entry x:Name="TenderEntry"
+               Keyboard="Numeric"
+               Text="{x:Null}"
+               HorizontalTextAlignment="End"
+               FontSize="18"
+               Placeholder="0.00" />
+
+        <Label x:Name="BalanceLabel"
+               Text="Change: 0.00"
+               FontAttributes="Bold"
+               HorizontalOptions="End"
+               TextColor="Green"/>
+
+        <!-- Stock problems area (hidden when no shortages) -->
+        <Frame x:Name="StockProblemsFrame" IsVisible="False" BackgroundColor="#FFF3E0" CornerRadius="6" Padding="8">
+            <VerticalStackLayout Spacing="6">
+                <Label Text="Stock issues:" FontAttributes="Bold" TextColor="#D84315"/>
+                <StackLayout x:Name="StockProblemsList" Spacing="4"/>
+                <Label Text="Please adjust quantities before completing payment." FontSize="12" TextColor="#D84315"/>
+            </VerticalStackLayout>
+        </Frame>
+
+        <HorizontalStackLayout Spacing="12" HorizontalOptions="Fill">
+            <Button x:Name="CancelButton" Text="Cancel" BackgroundColor="#BDBDBD" HorizontalOptions="Start" Clicked="OnCancelClicked" />
+            <Button x:Name="ConfirmButton" Text="Confirm" BackgroundColor="#1976D2" TextColor="White" HorizontalOptions="End" Clicked="OnConfirmClicked" />
+        </HorizontalStackLayout>
+    </VerticalStackLayout>
+</ContentPage>

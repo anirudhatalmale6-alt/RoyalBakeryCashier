@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="RoyalBakeryCashier.Pages.CashierPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    BackgroundColor="#F5F5F5"
+    Title="POS Window">
+
+    <Grid RowDefinitions="Auto,*"
+          ColumnDefinitions="3*,1*"
+          Padding="15"
+          ColumnSpacing="10">
+
+        <!-- ================= TOP BAR ================= -->
+        <Grid Grid.ColumnSpan="2" Padding="0,0,0,10">
+            <HorizontalStackLayout HorizontalOptions="End"/>
+        </Grid>
+
+        <!-- ================= LEFT SIDE ================= -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Spacing="15">
+
+                <Label Text="Cashier POS"
+                       FontSize="28"
+                       HorizontalOptions="Center"/>
+
+                <!-- Categories -->
+                <Frame BackgroundColor="White"
+                       Padding="10"
+                       CornerRadius="12"
+                       HasShadow="True">
+
+                    <ScrollView Orientation="Horizontal">
+                        <HorizontalStackLayout
+                            x:Name="CategoryStack"
+                            Spacing="12"/>
+                    </ScrollView>
+                </Frame>
+
+                <!-- Items -->
+                <Frame BackgroundColor="White"
+                       Padding="10"
+                       CornerRadius="12"
+                       HasShadow="True">
+
+                    <VerticalStackLayout Spacing="10">
+
+                        <Label Text="Items"
+                               FontSize="20"/>
+
+                        <!-- FIXED: Added Orientation -->
+                        <CollectionView x:Name="ItemsCollectionView"
+                                        SelectionMode="Single"
+                                        SelectionChanged="ItemsCollectionView_SelectionChanged">
+
+                            <CollectionView.ItemsLayout>
+                                <GridItemsLayout Orientation="Vertical" Span="5"/>
+                            </CollectionView.ItemsLayout>
+
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Frame Padding="8"
+                                           BackgroundColor="#f9f9f9"
+                                           CornerRadius="10">
+
+                                        <VerticalStackLayout Spacing="6">
+                                            <Image Source="items.png"
+                                                   HeightRequest="90"
+                                                   WidthRequest="90"
+                                                   HorizontalOptions="Center"/>
+
+                                            <Label Text="{Binding Name}" FontSize="14"/>
+
+                                            <Label Text="{Binding Price, StringFormat='LKR {0:F2}'}"
+                                                   FontSize="12"/>
+
+                                            <Label Text="{Binding AvailableStock, StringFormat='Stock: {0}'}"
+                                                   FontSize="10"/>
+                                        </VerticalStackLayout>
+
+                                    </Frame>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+
+                        </CollectionView>
+
+                    </VerticalStackLayout>
+                </Frame>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- ================= RIGHT SIDE (RESPONSIVE CART) ================= -->
+        <Frame Grid.Row="1"
+               Grid.Column="1"
+               BackgroundColor="White"
+               Padding="10"
+               CornerRadius="12"
+               HasShadow="True">
+
+            <!-- ⭐ RESPONSIVE GRID (KEY FIX) -->
+            <Grid RowDefinitions="Auto,*,Auto,Auto,Auto"
+                  RowSpacing="10">
+
+                <!-- Title -->
+                <Label Text="Bill"
+                       FontSize="20"
+                       HorizontalOptions="Center"/>
+
+                <!-- Cart fills available space and scrolls -->
+                <CollectionView Grid.Row="1"
+                                x:Name="CartCollectionView"
+                                VerticalOptions="FillAndExpand">
+
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Frame Padding="8"
+                                   Margin="0,4"
+                                   BackgroundColor="#E0F2F1"
+                                   CornerRadius="8">
+
+                                <Grid ColumnDefinitions="*,Auto,Auto">
+
+                                    <Label Text="{Binding Name}"
+                                           VerticalOptions="Center"/>
+
+                                    <HorizontalStackLayout Grid.Column="1"
+                                                           Spacing="4">
+
+                                        <Button Text="-"
+                                                WidthRequest="30"
+                                                HeightRequest="30"
+                                                Clicked="DecreaseQuantity_Clicked"
+                                                CommandParameter="{Binding .}"/>
+
+                                        <Label Text="{Binding Quantity}"
+                                               WidthRequest="25"
+                                               HorizontalTextAlignment="Center"/>
+
+                                        <Button Text="+"
+                                                WidthRequest="30"
+                                                HeightRequest="30"
+                                                Clicked="IncreaseQuantity_Clicked"
+                                                CommandParameter="{Binding .}"/>
+                                    </HorizontalStackLayout>
+
+                                    <Label Grid.Column="2"
+                                           Text="{Binding Total, StringFormat='LKR {0:F2}'}"
+                                           HorizontalOptions="End"/>
+                                </Grid>
+
+                            </Frame>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+
+                </CollectionView>
+
+                <!-- Total -->
+                <HorizontalStackLayout Grid.Row="2"
+                                       HorizontalOptions="End"
+                                       Spacing="10">
+
+                    <Label x:Name="TotalLabel" Text="Total: LKR 0.00"/>
+
+                    <Button Text="Place Order"
+                            BackgroundColor="#26A69A"
+                            TextColor="White"
+                            Clicked="PlaceOrder_Clicked"/>
+                </HorizontalStackLayout>
+
+                <!-- Quantity -->
+                <Entry Grid.Row="3"
+                       x:Name="QuantityEntry"
+                       Placeholder="Type quantity then tap item"
+                       IsReadOnly="True"
+                       Keyboard="Numeric"/>
+
+                <!-- ⭐ KEYPAD AUTO-RESIZES -->
+                <Grid Grid.Row="4"
+                      RowDefinitions="*,*,*,*"
+                      ColumnDefinitions="*,*,*"
+                      ColumnSpacing="5"
+                      RowSpacing="5">
+
+                    <Button Text="1" Clicked="Keypad_Clicked"/>
+                    <Button Grid.Column="1" Text="2" Clicked="Keypad_Clicked"/>
+                    <Button Grid.Column="2" Text="3" Clicked="Keypad_Clicked"/>
+
+                    <Button Grid.Row="1" Text="4" Clicked="Keypad_Clicked"/>
+                    <Button Grid.Row="1" Grid.Column="1" Text="5" Clicked="Keypad_Clicked"/>
+                    <Button Grid.Row="1" Grid.Column="2" Text="6" Clicked="Keypad_Clicked"/>
+
+                    <Button Grid.Row="2" Text="7" Clicked="Keypad_Clicked"/>
+                    <Button Grid.Row="2" Grid.Column="1" Text="8" Clicked="Keypad_Clicked"/>
+                    <Button Grid.Row="2" Grid.Column="2" Text="9" Clicked="Keypad_Clicked"/>
+
+                    <Button Grid.Row="3" Text="0" Clicked="Keypad_Clicked"/>
+
+                    <Button Grid.Row="3" Grid.Column="1"
+                            Text="Clear"
+                            BackgroundColor="#FF8A65"
+                            TextColor="White"
+                            Clicked="ClearKeypad_Clicked"/>
+
+                    <Button Grid.Row="3" Grid.Column="2"
+                            Text="CLR CART"
+                            BackgroundColor="#FF7043"
+                            TextColor="White"
+                            Clicked="ClearCart_Clicked"/>
+                </Grid>
+
+            </Grid>
+
+        </Frame>
+
+    </Grid>
+</ContentPage>

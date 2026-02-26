@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RoyalBakeryCashier.Pages.OrderDetailsPage"
+             Title="Order Details">
+    <!-- Top-level split: left = cart, right = categories + keypad -->
+    <Grid Padding="12" ColumnDefinitions="2*,*" RowDefinitions="Auto,*" ColumnSpacing="12">
+
+        <!-- Header -->
+        <Label Grid.ColumnSpan="2"
+               Text="Point of Sale — Order Details"
+               FontAttributes="Bold"
+               FontSize="20"
+               HorizontalOptions="Center" />
+
+        <!-- Left: Cart panel -->
+        <Frame Grid.Row="1" Grid.Column="0" CornerRadius="8" Padding="10" HasShadow="True">
+            <Grid RowDefinitions="Auto,*,Auto" RowSpacing="8">
+                <Label Text="Cart"
+                       FontAttributes="Bold"
+                       FontSize="16" />
+
+                <!-- Items list -->
+                <CollectionView Grid.Row="1"
+                                ItemsSource="{Binding Items}"
+                                SelectionMode="Single"
+                                SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+                                Margin="0,8,0,8">
+                    <CollectionView.ItemsLayout>
+                        <LinearItemsLayout Orientation="Vertical" ItemSpacing="4"/>
+                    </CollectionView.ItemsLayout>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Frame CornerRadius="6" Padding="8" Margin="0" BackgroundColor="#333">
+                                <Grid ColumnDefinitions="*,Auto,Auto" RowDefinitions="Auto">
+                                    <Label Grid.Column="0"
+                                           Text="{Binding Name}"
+                                           FontAttributes="Bold"
+                                           VerticalOptions="Center" />
+                                    <Label Grid.Column="1"
+                                           Text="{Binding Quantity}"
+                                           VerticalOptions="Center"
+                                           HorizontalOptions="End"
+                                           Margin="12,0,8,0" />
+                                    <StackLayout Grid.Column="2" HorizontalOptions="End" Spacing="2" VerticalOptions="Center">
+                                        <Label Text="{Binding UnitPrice, StringFormat='{0:C}'}" HorizontalOptions="End" FontSize="12"/>
+                                        <Label Text="{Binding SubTotal, StringFormat='{0:C}'}" HorizontalOptions="End" FontAttributes="Bold"/>
+                                    </StackLayout>
+                                </Grid>
+                            </Frame>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <!-- Summary (subtotal, tax, discount, total) -->
+                <StackLayout Grid.Row="2" Spacing="6">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Text="Subtotal" />
+                        <Label Text="{Binding TotalAmount, StringFormat='{0:C}'}" Grid.Column="1" HorizontalOptions="End"/>
+                    </Grid>
+
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Text="Tax" />
+                        <Label Text="{Binding TaxAmount, TargetNullValue='0.00', StringFormat='{0:C}'}" Grid.Column="1" HorizontalOptions="End"/>
+                    </Grid>
+
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Text="Discount" />
+                        <Label Text="{Binding DiscountAmount, TargetNullValue='0.00', StringFormat='{0:C}'}" Grid.Column="1" HorizontalOptions="End"/>
+                    </Grid>
+
+                    <Frame BackgroundColor="#333" CornerRadius="6" Padding="10">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Text="TOTAL" TextColor="White" FontAttributes="Bold"/>
+                            <Label Text="{Binding GrandTotal, TargetNullValue={Binding TotalAmount}, StringFormat='{0:C}'}"
+                                   Grid.Column="1"
+                                   TextColor="#FFEB3B"
+                                   FontAttributes="Bold"
+                                   HorizontalOptions="End"/>
+                        </Grid>
+                    </Frame>
+                </StackLayout>
+            </Grid>
+        </Frame>
+
+        <!-- Right: categories (top) and keypad (bottom) -->
+        <Grid Grid.Row="1" Grid.Column="1" RowDefinitions="Auto,*,Auto" RowSpacing="12">
+
+            <!-- Categories grid -->
+            <Frame CornerRadius="8" Padding="8" HasShadow="True">
+                <StackLayout>
+                    <Label Text="Categories" FontAttributes="Bold" FontSize="16"/>
+                    <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="8" Margin="0,8,0,0">
+                        <!-- Example category buttons; bind to commands in the VM as needed -->
+                        <Button Text="Bread" Grid.Row="0" Grid.Column="0" HeightRequest="70" FontSize="16" BackgroundColor="#2196F3" TextColor="White" CornerRadius="8"/>
+                        <Button Text="Pastries" Grid.Row="0" Grid.Column="1" HeightRequest="70" FontSize="16" BackgroundColor="#4CAF50" TextColor="White" CornerRadius="8"/>
+                        <Button Text="Cakes" Grid.Row="0" Grid.Column="2" HeightRequest="70" FontSize="16" BackgroundColor="#FF9800" TextColor="White" CornerRadius="8"/>
+                        <Button Text="Drinks" Grid.Row="1" Grid.Column="0" HeightRequest="70" FontSize="16" BackgroundColor="#9C27B0" TextColor="White" CornerRadius="8"/>
+                        <Button Text="Specials" Grid.Row="1" Grid.Column="1" HeightRequest="70" FontSize="16" BackgroundColor="#F44336" TextColor="White" CornerRadius="8"/>
+                        <Button Text="All" Grid.Row="1" Grid.Column="2" HeightRequest="70" FontSize="16" BackgroundColor="#607D8B" TextColor="White" CornerRadius="8"/>
+                    </Grid>
+                </StackLayout>
+            </Frame>
+
+            <!-- Numpad + actions -->
+            <Frame Grid.Row="1" CornerRadius="8" Padding="8" HasShadow="True">
+                <Grid RowDefinitions="Auto,*,Auto" RowSpacing="8">
+                    <Label Text="Qty / Payment Keypad" FontAttributes="Bold" />
+
+                    <!-- keypad grid -->
+                    <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*,*,*" ColumnSpacing="8" RowSpacing="8" VerticalOptions="Center" HorizontalOptions="Fill">
+                        <Button Text="1" Grid.Row="0" Grid.Column="0" HeightRequest="64" FontSize="18" Command="{Binding AppendDigitCommand}" CommandParameter="1"/>
+                        <Button Text="2" Grid.Row="0" Grid.Column="1" HeightRequest="64" FontSize="18" Command="{Binding AppendDigitCommand}" CommandParameter="2"/>
+                        <Button Text="3" Grid.Row="0" Grid.Column="2" HeightRequest="64" FontSize="18" Command="{Binding AppendDigitCommand}" CommandParameter="3"/>
+
+                        <Button Text="4" Grid.Row="1" Grid.Column="0" HeightRequest="64" FontSize="18" Command="{Binding AppendDigitCommand}" CommandParameter="4"/>
+                        <Button Text="5" Grid.Row="1" Grid.Column="1" HeightRequest="64" FontSize="18" Command="{Binding AppendDigitCommand}" CommandParameter="5"/>
+                        <Button Text="6" Grid.Row="1" Grid.Column="2" HeightRequest="64" FontSize="18" Command="{Binding AppendDigitCommand}" CommandParameter="6"/>
+
+                        <Button Text="7" Grid.Row="2" Grid.Column="0" HeightRequest="64" FontSize="18" Command="{Binding AppendDigitCommand}" CommandParameter="7"/>
+                        <Button Text="8" Grid.Row="2" Grid.Column="1" HeightRequest="64" FontSize="18" Command="{Binding AppendDigitCommand}" CommandParameter="8"/>
+                        <Button Text="9" Grid.Row="2" Grid.Column="2" HeightRequest="64" FontSize="18" Command="{Binding AppendDigitCommand}" CommandParameter="9"/>
+
+                        <Button Text="Clear" Grid.Row="3" Grid.Column="0" HeightRequest="64" FontSize="16" BackgroundColor="#BDBDBD" Command="{Binding ClearCommand}"/>
+                        <Button Text="0" Grid.Row="3" Grid.Column="1" HeightRequest="64" FontSize="18" Command="{Binding AppendDigitCommand}" CommandParameter="0"/>
+                        <Button Text="⌫" Grid.Row="3" Grid.Column="2" HeightRequest="64" FontSize="18" BackgroundColor="#FFE0B2" Command="{Binding BackspaceCommand}"/>
+                    </Grid>
+
+                    <!-- total of the bill: full-width, defaulted by VM (EditableTotal) -->
+                    <Grid Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="0,8,0,0">
+                        <Entry Grid.Column="0"
+                               Text="{Binding EditableTotal, Mode=TwoWay}"
+                               Keyboard="Numeric"
+                               HorizontalOptions="FillAndExpand"
+                               HorizontalTextAlignment="End"
+                               HeightRequest="56"
+                               FontSize="18"
+                               AutomationId="EditableTotalEntry" />
+                        <!-- Pay process button -->
+                        <Button Grid.Column="1"
+                                Text="Process"
+                                BackgroundColor="#1976D2"
+                                TextColor="White"
+                                HeightRequest="56"
+                                FontSize="16"
+                                Command="{Binding PayCommand}" />
+                    </Grid>
+                </Grid>
+            </Frame>
+        </Grid>
+    </Grid>
+</ContentPage>
