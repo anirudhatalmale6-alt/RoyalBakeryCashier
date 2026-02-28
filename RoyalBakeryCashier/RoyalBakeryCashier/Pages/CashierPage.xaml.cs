@@ -229,7 +229,11 @@ namespace RoyalBakeryCashier.Pages
             _dbContext.Orders.Add(order);
             await _dbContext.SaveChangesAsync();
 
-            await Navigation.PushAsync(new PaymentPage(order.Id));
+            await Navigation.PushModalAsync(new NavigationPage(new PaymentPage(order.Id))
+            {
+                BarBackgroundColor = Color.FromArgb("#1A1A1A"),
+                BarTextColor = Colors.White
+            });
         }
 
         private void DecreaseQuantity_Clicked(object sender, EventArgs e)
