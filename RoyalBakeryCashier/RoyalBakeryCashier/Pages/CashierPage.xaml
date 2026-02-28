@@ -7,7 +7,7 @@
     Title="POS Window">
 
     <Grid RowDefinitions="Auto,*"
-          ColumnDefinitions="3*,1*"
+          ColumnDefinitions="3.5*,1*"
           Padding="15"
           ColumnSpacing="10">
 
@@ -57,29 +57,46 @@
                                         SelectionChanged="ItemsCollectionView_SelectionChanged">
 
                             <CollectionView.ItemsLayout>
-                                <GridItemsLayout Orientation="Vertical" Span="5"/>
+                                <GridItemsLayout Orientation="Vertical"
+                                                 Span="5"
+                                                 HorizontalItemSpacing="10"
+                                                 VerticalItemSpacing="10"/>
                             </CollectionView.ItemsLayout>
 
                             <CollectionView.ItemTemplate>
                                 <DataTemplate>
-                                    <Frame Padding="8"
+                                    <Frame Padding="12"
+                                           Margin="0"
                                            BackgroundColor="{StaticResource ItemRowBg}"
                                            CornerRadius="10"
-                                           BorderColor="{StaticResource Gray600}">
+                                           BorderColor="{StaticResource Gray600}"
+                                           HorizontalOptions="FillAndExpand">
 
-                                        <VerticalStackLayout Spacing="6">
+                                        <VerticalStackLayout Spacing="6"
+                                                             HorizontalOptions="Center">
                                             <Image Source="items.png"
-                                                   HeightRequest="90"
-                                                   WidthRequest="90"
+                                                   HeightRequest="80"
+                                                   WidthRequest="80"
+                                                   Aspect="AspectFit"
                                                    HorizontalOptions="Center"/>
 
-                                            <Label Text="{Binding Name}" FontSize="14" TextColor="White"/>
+                                            <Label Text="{Binding Name}"
+                                                   FontSize="14"
+                                                   TextColor="White"
+                                                   HorizontalTextAlignment="Center"
+                                                   LineBreakMode="TailTruncation"
+                                                   MaxLines="1"/>
 
                                             <Label Text="{Binding Price, StringFormat='LKR {0:F2}'}"
-                                                   FontSize="12" TextColor="{StaticResource TotalHighlight}"/>
+                                                   FontSize="13"
+                                                   FontAttributes="Bold"
+                                                   TextColor="{StaticResource TotalHighlight}"
+                                                   HorizontalTextAlignment="Center"/>
 
                                             <Label Text="{Binding AvailableStock, StringFormat='Stock: {0}'}"
-                                                   FontSize="10" TextColor="{StaticResource Gray300}"/>
+                                                   FontSize="11"
+                                                   TextColor="{StaticResource Gray300}"
+                                                   HorizontalTextAlignment="Center"/>
                                         </VerticalStackLayout>
 
                                     </Frame>
