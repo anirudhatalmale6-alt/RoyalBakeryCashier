@@ -21,6 +21,8 @@ namespace RoyalBakeryCashier.Data
         public DbSet<GRN> GRNs { get; set; }
         public DbSet<GRNItem> GRNItems { get; set; }
         public DbSet<Clearance> Clearances { get; set; }
+        public DbSet<Sale> Sales { get; set; }
+        public DbSet<SaleItem> SaleItems { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -69,6 +71,19 @@ namespace RoyalBakeryCashier.Data
                 .WithMany(grn => grn.Items) // GRN must have: public ICollection<GRNItem> Items { get; set; }
                 .HasForeignKey(g => g.GRNId)
                 .HasConstraintName("FK_GRNItem_GRN")
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // ===== Sale → SaleItem =====
+            modelBuilder.Entity<SaleItem>()
+                .HasOne(si => si.Sale)
+                .WithMany(s => s.Items)
+                .HasForeignKey(si => si.SaleId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<SaleItem>()
+                .HasOne(si => si.MenuItem)
+                .WithMany()
+                .HasForeignKey(si => si.MenuItemId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // ===== Decimal / int precision =====

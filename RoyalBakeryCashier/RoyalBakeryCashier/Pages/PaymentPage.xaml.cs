@@ -155,21 +155,62 @@ public partial class PaymentPage : ContentPage
             return;
         }
 
+        decimal change = (cash + card) - _total;
+        if (change < 0) change = 0;
+
         using var tx = await _db.Database.BeginTransactionAsync();
         try
         {
-            SavePayments(cash, card);
+            // 1. Deduct stock and GRN
             DeductStock(_order);
             DeductGRNForOrder(_order);
 
-            _order.Status = 0; // Mark as completed
+            // 2. Create Sale record in Sales table
+            var sale = new Sale
+            {
+                DateTime = DateTime.Now,
+                TotalAmount = _total,
+                CashAmount = cash,
+                CardAmount = card,
+                ChangeGiven = change,
+                InvoiceNumber = $"INV-{_order.Id:D5}",
+                Items = _order.Items.Select(i => new SaleItem
+                {
+                    MenuItemId = i.MenuItemId,
+                    ItemName = i.MenuItem?.Name ?? "Unknown",
+                    Quantity = i.Quantity,
+                    PricePerItem = i.PricePerItem,
+                    TotalPrice = i.TotalPrice
+                }).ToList()
+            };
+            _db.Sales.Add(sale);
 
-            CreatedInvoice = CreateInvoice(_order, cash, card);
+            // 3. Clear order data (order + items + payments)
+            var payments = _db.OrderPayments.Where(p => p.OrderId == _order.Id);
+            _db.OrderPayments.RemoveRange(payments);
+            _db.OrderItems.RemoveRange(_order.Items);
+            _db.Orders.Remove(_order);
 
             await _db.SaveChangesAsync();
             await tx.CommitAsync();
 
-            // Show receipt as a new modal
+            // 4. Build invoice DTO for receipt display
+            CreatedInvoice = new Invoice
+            {
+                OrderId = sale.InvoiceNumber,
+                CustomerName = "Walk-in",
+                CreatedAt = sale.DateTime,
+                CashAmount = cash,
+                CardAmount = card,
+                Items = sale.Items.Select(si => new InvoiceItem
+                {
+                    Name = si.ItemName,
+                    Quantity = si.Quantity,
+                    UnitPrice = si.PricePerItem
+                }).ToList()
+            };
+
+            // Show receipt
             await Navigation.PushAsync(new ReceiptPage(CreatedInvoice));
         }
         catch (DbUpdateException dbEx)
@@ -183,32 +224,6 @@ public partial class PaymentPage : ContentPage
             await tx.RollbackAsync();
             await DisplayAlert("Error", ex.Message, "OK");
         }
-    }
-
-    private void SavePayments(decimal cash, decimal card)
-    {
-        if (cash > 0)
-            _db.OrderPayments.Add(new OrderPayments { OrderId = _order.Id, PaymentType = 0, TenderAmount = cash, DateTime = DateTime.Now });
-        if (card > 0)
-            _db.OrderPayments.Add(new OrderPayments { OrderId = _order.Id, PaymentType = 1, TenderAmount = card, DateTime = DateTime.Now });
-    }
-
-    private Invoice CreateInvoice(Order order, decimal cashPaid, decimal cardPaid)
-    {
-        return new Invoice
-        {
-            OrderId = order.Id.ToString(),
-            CustomerName = "Walk-in",
-            CreatedAt = DateTime.Now,
-            CashAmount = cashPaid,
-            CardAmount = cardPaid,
-            Items = order.Items.Select(i => new InvoiceItem
-            {
-                Name = i.MenuItem!.Name,
-                Quantity = i.Quantity,
-                UnitPrice = i.PricePerItem
-            }).ToList()
-        };
     }
 
     private void DeductStock(Order order)
