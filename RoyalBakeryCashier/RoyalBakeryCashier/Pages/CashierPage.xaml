@@ -13,17 +13,26 @@
 
         <!-- ================= TOP BAR ================= -->
         <Grid Grid.ColumnSpan="2" Padding="0,0,0,10">
-            <HorizontalStackLayout HorizontalOptions="End"/>
+            <Label Text="Cashier POS"
+                   FontSize="22"
+                   FontAttributes="Bold"
+                   TextColor="White"
+                   VerticalOptions="Center"/>
+            <HorizontalStackLayout HorizontalOptions="End" Spacing="8">
+                <Button Text="Sales History"
+                        FontSize="13"
+                        HeightRequest="36"
+                        Padding="12,0"
+                        CornerRadius="8"
+                        BackgroundColor="{StaticResource CatPastries}"
+                        TextColor="White"
+                        Clicked="SalesHistory_Clicked"/>
+            </HorizontalStackLayout>
         </Grid>
 
         <!-- ================= LEFT SIDE ================= -->
         <ScrollView Grid.Row="1">
             <VerticalStackLayout Spacing="15">
-
-                <Label Text="Cashier POS"
-                       FontSize="28"
-                       TextColor="White"
-                       HorizontalOptions="Center"/>
 
                 <!-- Categories — large 3-column grid -->
                 <Frame BackgroundColor="{StaticResource CardBg}"
