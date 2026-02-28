@@ -137,13 +137,18 @@
                                 <Grid ColumnDefinitions="*,Auto,Auto"
                                       ColumnSpacing="6">
 
-                                    <!-- Item name — fixed area, left aligned -->
+                                    <!-- Item name — tap to delete -->
                                     <Label Text="{Binding Name}"
                                            TextColor="White"
                                            FontSize="13"
                                            VerticalOptions="Center"
                                            LineBreakMode="TailTruncation"
-                                           MaxLines="1"/>
+                                           MaxLines="1">
+                                        <Label.GestureRecognizers>
+                                            <TapGestureRecognizer CommandParameter="{Binding .}"
+                                                                  Tapped="CartItemName_Tapped"/>
+                                        </Label.GestureRecognizers>
+                                    </Label>
 
                                     <!-- Qty controls — fixed width center block -->
                                     <HorizontalStackLayout Grid.Column="1"

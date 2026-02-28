@@ -236,6 +236,28 @@ namespace RoyalBakeryCashier.Pages
             });
         }
 
+        private async void CartItemName_Tapped(object sender, TappedEventArgs e)
+        {
+            if (e.Parameter is CartItem item)
+            {
+                bool confirm = await DisplayAlert("Remove Item",
+                    $"Remove \"{item.Name}\" from cart?", "Delete", "Cancel");
+
+                if (confirm)
+                {
+                    // Restore stock
+                    var menuItem = _allItems.FirstOrDefault(x => x.MenuItemId == item.MenuItemId);
+                    if (menuItem != null)
+                        menuItem.AvailableStock += item.Quantity;
+
+                    _cartItems.Remove(item);
+                    UpdateTotal();
+                    RefreshCart();
+                    RefreshItemsList();
+                }
+            }
+        }
+
         private void DecreaseQuantity_Clicked(object sender, EventArgs e)
         {
             if (sender is Button btn && btn.CommandParameter is CartItem item)
