@@ -3,10 +3,8 @@ using Microsoft.Maui.Controls;
 using Microsoft.Maui.Graphics;
 using RoyalBakeryCashier.Data;
 using RoyalBakeryCashier.Data.Entities;
-using RoyalBakeryCashier.Models;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
 
 namespace RoyalBakeryCashier.Pages
 {
@@ -321,40 +319,6 @@ namespace RoyalBakeryCashier.Pages
             public string Name { get; set; } = string.Empty;
             public decimal Price { get; set; }
             public int AvailableStock { get; set; }
-        }
-        public class ReceiptPage : ContentPage
-        {
-            public ReceiptPage(Invoice invoice)
-            {
-                Title = "Receipt";
-
-                var sb = new StringBuilder();
-                sb.AppendLine("=== Royal Bakery ===");
-                sb.AppendLine($"Invoice #: {invoice.OrderId}");
-                sb.AppendLine($"Customer: {invoice.CustomerName}");
-                sb.AppendLine($"Date: {invoice.CreatedAt}");
-                sb.AppendLine("------------------------");
-
-                foreach (var item in invoice.Items)
-                {
-                    sb.AppendLine($"{item.Name} x{item.Quantity} @ LKR{item.UnitPrice:F2} = LKR{item.SubTotal:F2}");
-                }
-
-                sb.AppendLine("------------------------");
-                sb.AppendLine($"Total: LKR{invoice.Items.Sum(i => i.SubTotal):F2}");
-                sb.AppendLine("========================");
-
-                Content = new ScrollView
-                {
-                    Content = new Label
-                    {
-                        Text = sb.ToString(),
-                        FontFamily = "Consolas",
-                        FontSize = 16,
-                        LineHeight = 1.2
-                    }
-                };
-            }
         }
     }
 }
