@@ -1,9 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RoyalBakeryCashier.Data.Entities
 {
-    [Table("MenuItems")] // maps to your SQL table
+    [Table("MenuItems")]
     public class MenuItem
     {
         public int Id { get; set; }
@@ -11,5 +10,4 @@ namespace RoyalBakeryCashier.Data.Entities
         public decimal Price { get; set; }
         public int MenuCategoryId { get; set; }
     }
-
 }

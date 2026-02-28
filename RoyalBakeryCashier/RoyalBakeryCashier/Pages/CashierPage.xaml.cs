@@ -3,6 +3,7 @@ using Microsoft.Maui.Controls;
 using Microsoft.Maui.Graphics;
 using RoyalBakeryCashier.Data;
 using RoyalBakeryCashier.Data.Entities;
+using RoyalBakeryCashier.Models;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
@@ -28,14 +29,11 @@ namespace RoyalBakeryCashier.Pages
             LoadItems();
         }
 
-        // ===== Categories =====
         private void LoadCategories()
         {
             var categories = _dbContext.MenuCategories.ToList();
             CategoryStack.Children.Clear();
-
             CategoryStack.Children.Add(CreateCategoryButton("All", null, null));
-
             foreach (var cat in categories)
                 CategoryStack.Children.Add(CreateCategoryButton(cat.Name, null, cat.Id));
         }
@@ -61,7 +59,6 @@ namespace RoyalBakeryCashier.Pages
             await Shell.Current.GoToAsync("ClearStock");
         }
 
-        // ===== Items =====
         private void LoadItems()
         {
             var items = _dbContext.Stocks
@@ -103,7 +100,6 @@ namespace RoyalBakeryCashier.Pages
             RefreshItemsList();
         }
 
-        // ===== Selection =====
         private void ItemsCollectionView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (e.CurrentSelection.FirstOrDefault() is ItemViewModel selected)
@@ -119,7 +115,6 @@ namespace RoyalBakeryCashier.Pages
             }
         }
 
-        // ===== Add to cart =====
         private void AddToCart(ItemViewModel menuItem, int qty)
         {
             if (qty <= 0) return;
@@ -166,7 +161,6 @@ namespace RoyalBakeryCashier.Pages
             ItemsCollectionView.ItemsSource = _filteredItems;
         }
 
-        // ===== Keypad =====
         private void Keypad_Clicked(object sender, EventArgs e)
         {
             if (sender is Button b && (QuantityEntry.Text?.Length ?? 0) < 6)
@@ -175,7 +169,6 @@ namespace RoyalBakeryCashier.Pages
 
         private void ClearKeypad_Clicked(object sender, EventArgs e) => QuantityEntry.Text = string.Empty;
 
-        // ===== Cart management =====
         private void ClearCart_Clicked(object sender, EventArgs e)
         {
             _cartItems.Clear();
@@ -184,7 +177,6 @@ namespace RoyalBakeryCashier.Pages
             RefreshCart();
         }
 
-        // ===== Place Order & Show Receipt =====
         private async void PlaceOrder_Clicked(object sender, EventArgs e)
         {
             if (!_cartItems.Any())
@@ -193,7 +185,6 @@ namespace RoyalBakeryCashier.Pages
                 return;
             }
 
-            // Create new order
             var order = new Order
             {
                 DateTime = DateTime.Now,
@@ -204,27 +195,17 @@ namespace RoyalBakeryCashier.Pages
                     MenuItemId = c.MenuItemId,
                     Quantity = c.Quantity,
                     PricePerItem = c.Price,
-                    TotalPrice = c.Total
+                    TotalPrice = c.Total,
+                    MenuItem = null
                 }).ToList()
             };
 
             _dbContext.Orders.Add(order);
-            _dbContext.SaveChanges();
+            await _dbContext.SaveChangesAsync();
 
-            await DisplayAlert("Success", $"Order #{order.Id} placed!", "OK");
-
-            // Show receipt page
-            await Navigation.PushAsync(new ReceiptPage(order));
-
-            // Reset POS page
-            _cartItems.Clear();
-            LoadItems();
-            UpdateTotal();
-            RefreshCart();
-            QuantityEntry.Text = string.Empty;
+            await Navigation.PushAsync(new PaymentPage(order.Id));
         }
 
-        // ===== Increase / Decrease =====
         private void DecreaseQuantity_Clicked(object sender, EventArgs e)
         {
             if (sender is Button btn && btn.CommandParameter is CartItem item)
@@ -273,7 +254,6 @@ namespace RoyalBakeryCashier.Pages
             CartCollectionView.ItemsSource = _cartItems;
         }
 
-        // ===== Models =====
         public class CartItem
         {
             public int MenuItemId { get; set; }
@@ -290,37 +270,39 @@ namespace RoyalBakeryCashier.Pages
             public decimal Price { get; set; }
             public int AvailableStock { get; set; }
         }
-    }
-
-    // ===== ReceiptPage (simple text preview) =====
-    public class ReceiptPage : ContentPage
-    {
-        public ReceiptPage(Order order)
+        public class ReceiptPage : ContentPage
         {
-            Title = "Receipt";
-            var sb = new StringBuilder();
-            sb.AppendLine("=== Royal Bakery ===");
-            sb.AppendLine($"Order #: {order.Id}");
-            sb.AppendLine($"Date: {order.DateTime}");
-            sb.AppendLine("------------------------");
-            foreach (var item in order.Items)
+            public ReceiptPage(Invoice invoice)
             {
-                sb.AppendLine($"ItemId: {item.MenuItemId} x{item.Quantity} @ LKR{item.PricePerItem:F2} = LKR{item.TotalPrice:F2}");
-            }
-            sb.AppendLine("------------------------");
-            sb.AppendLine($"Total: LKR{order.TotalAmount:F2}");
-            sb.AppendLine("========================");
+                Title = "Receipt";
 
-            Content = new ScrollView
-            {
-                Content = new Label
+                var sb = new StringBuilder();
+                sb.AppendLine("=== Royal Bakery ===");
+                sb.AppendLine($"Invoice #: {invoice.OrderId}");
+                sb.AppendLine($"Customer: {invoice.CustomerName}");
+                sb.AppendLine($"Date: {invoice.CreatedAt}");
+                sb.AppendLine("------------------------");
+
+                foreach (var item in invoice.Items)
                 {
-                    Text = sb.ToString(),
-                    FontFamily = "Consolas",
-                    FontSize = 16,
-                    LineHeight = 1.2
+                    sb.AppendLine($"{item.Name} x{item.Quantity} @ LKR{item.UnitPrice:F2} = LKR{item.SubTotal:F2}");
                 }
-            };
+
+                sb.AppendLine("------------------------");
+                sb.AppendLine($"Total: LKR{invoice.Items.Sum(i => i.SubTotal):F2}");
+                sb.AppendLine("========================");
+
+                Content = new ScrollView
+                {
+                    Content = new Label
+                    {
+                        Text = sb.ToString(),
+                        FontFamily = "Consolas",
+                        FontSize = 16,
+                        LineHeight = 1.2
+                    }
+                };
+            }
         }
     }
 }

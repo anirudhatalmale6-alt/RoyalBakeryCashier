@@ -361,7 +361,7 @@ namespace RoyalBakeryCashier.ViewModels
             try
             {
                 using var db = new StockDbContext();
-                var dbItem = await db.OrderItem.FirstOrDefaultAsync(i => i.Id == SelectedItem.OrderItemId);
+                var dbItem = await db.OrderItems.FirstOrDefaultAsync(i => i.Id == SelectedItem.OrderItemId);
                 if (dbItem != null)
                 {
                     dbItem.Quantity = qty;

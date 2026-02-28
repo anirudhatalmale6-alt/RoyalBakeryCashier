@@ -1,0 +1,94 @@
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Class="RoyalBakeryCashier.Pages.PaymentPage"
+    Title="Payment">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="25" Spacing="20">
+
+            <Label Text="Payment"
+                   FontSize="26"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center" />
+
+            <Label x:Name="TotalLabel"
+                   FontSize="20"
+                   TextColor="Green"
+                   HorizontalOptions="Center" />
+
+            <!-- Payment Method -->
+            <Label Text="Select Payment Method"
+                   FontSize="16"
+                   FontAttributes="Bold"/>
+            <Picker x:Name="MethodPicker"
+                    Title="Payment Method"
+                    SelectedIndexChanged="MethodChanged">
+                <Picker.Items>
+                    <x:String>Cash</x:String>
+                    <x:String>Card</x:String>
+                    <x:String>Both</x:String>
+                </Picker.Items>
+            </Picker>
+
+            <!-- Cash Entry -->
+            <Label Text="Cash Amount"
+                   FontSize="16"
+                   FontAttributes="Bold"/>
+            <Entry x:Name="CashEntry"
+                   Placeholder="Enter cash amount"
+                   Keyboard="Numeric"
+                   MaxLength="6"
+                   TextChanged="CashChanged"/>
+
+            <!-- Card Entry -->
+            <Label Text="Card Amount"
+                   FontSize="16"
+                   FontAttributes="Bold"/>
+            <Entry x:Name="CardEntry"
+                   Placeholder="Enter card amount"
+                   Keyboard="Numeric"
+                   IsVisible="False"
+                   MaxLength="6"
+                   TextChanged="CardChanged"/>
+
+            <!-- Numeric Keypad -->
+            <Grid RowSpacing="10" ColumnSpacing="10">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="60"/>
+                    <RowDefinition Height="60"/>
+                    <RowDefinition Height="60"/>
+                    <RowDefinition Height="60"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Row 1 -->
+                <Button Text="1" Grid.Row="0" Grid.Column="0" Clicked="Keypad_Clicked"/>
+                <Button Text="2" Grid.Row="0" Grid.Column="1" Clicked="Keypad_Clicked"/>
+                <Button Text="3" Grid.Row="0" Grid.Column="2" Clicked="Keypad_Clicked"/>
+
+                <!-- Row 2 -->
+                <Button Text="4" Grid.Row="1" Grid.Column="0" Clicked="Keypad_Clicked"/>
+                <Button Text="5" Grid.Row="1" Grid.Column="1" Clicked="Keypad_Clicked"/>
+                <Button Text="6" Grid.Row="1" Grid.Column="2" Clicked="Keypad_Clicked"/>
+
+                <!-- Row 3 -->
+                <Button Text="7" Grid.Row="2" Grid.Column="0" Clicked="Keypad_Clicked"/>
+                <Button Text="8" Grid.Row="2" Grid.Column="1" Clicked="Keypad_Clicked"/>
+                <Button Text="9" Grid.Row="2" Grid.Column="2" Clicked="Keypad_Clicked"/>
+
+                <!-- Row 4 -->
+                <Button Text="Clear" Grid.Row="3" Grid.Column="0" Clicked="ClearKeypad_Clicked"/>
+                <Button Text="0" Grid.Row="3" Grid.Column="1" Clicked="Keypad_Clicked"/>
+                <Button Text="Confirm" Grid.Row="3" Grid.Column="2" Clicked="Confirm_Clicked"
+                        BackgroundColor="Green"
+                        TextColor="White"/>
+            </Grid>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

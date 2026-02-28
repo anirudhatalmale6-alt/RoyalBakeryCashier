@@ -1,35 +1,26 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using RoyalBakeryCashier.Data.Entities;
 
 namespace RoyalBakeryCashier.Data
 {
     public class StockDbContext : DbContext
     {
         // Runtime DI constructor
-        public StockDbContext(DbContextOptions<StockDbContext> options)
-            : base(options) { }
+        public StockDbContext(DbContextOptions<StockDbContext> options) : base(options) { }
 
         // Parameterless constructor for design-time migrations
         public StockDbContext() { }
 
-        // DbSets for your entities
-        public DbSet<Entities.Order> Orders { get; set; }
-        public DbSet<Entities.OrderItem> OrderItem { get; set; }
-        public DbSet<Entities.Stock> Stocks { get; set; }
-        public DbSet<Entities.OrderPayments> OrderPayments { get; set; }
-        public DbSet<Entities.MenuItem> MenuItems { get; set; }      // Use alias here
-        public DbSet<Entities.MenuCategory> MenuCategories { get; set; }
-
-        //public DbSet<Entities.GRNAdjustmentRequest> GRNAdjustmentRequest { get; set; }
-
-        //public DbSet<Entities.GRNAdjustmentRequestItem> GRNAdjustmentRequestItem { get; set; }
-
-        public DbSet<Entities.Clearance> Clearances { get; set; }
-        // Uncomment when needed
-        public DbSet<Entities.GRN> GRNs { get; set; }
-         public DbSet<Entities.GRNItem> GRNItem { get; set; }
-        // public DbSet<Entities.GRNAdjustmentRequest> GRNAdjustmentRequest { get; set; }
-        // public DbSet<Entities.GRNAdjustmentRequestItem> GRNAdjustmentRequestItem { get; set; }
-         //public DbSet<Entities.Clearance> Clearances { get; set; }
+        // DbSets
+        public DbSet<Order> Orders { get; set; }
+        public DbSet<OrderItem> OrderItems { get; set; } // plural
+        public DbSet<Stock> Stocks { get; set; }
+        public DbSet<OrderPayments> OrderPayments { get; set; }
+        public DbSet<MenuItem> MenuItems { get; set; }
+        public DbSet<MenuCategory> MenuCategories { get; set; }
+        public DbSet<GRN> GRNs { get; set; }
+        public DbSet<GRNItem> GRNItems { get; set; }
+        public DbSet<Clearance> Clearances { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -44,19 +35,47 @@ namespace RoyalBakeryCashier.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // Example: Set decimal precision for GRNItem.Price
-            // modelBuilder.Entity<Entities.GRNItem>()
-            //     .Property(p => p.Price)
-            //     .HasColumnType("decimal(18,2)");
+            // ===== Order → OrderItem =====
+            modelBuilder.Entity<OrderItem>()
+                .HasOne(oi => oi.Order)
+                .WithMany(o => o.Items)
+                .HasForeignKey(oi => oi.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
 
-            // Example: Set decimal precision for Stock.Quantity
-            // modelBuilder.Entity<Entities.Stock>()
-            //     .Property(s => s.Quantity)
-            //     .HasColumnType("decimal(18,2)");
+            // ===== OrderItem → MenuItem =====
+            modelBuilder.Entity<OrderItem>()
+                .HasOne(oi => oi.MenuItem)
+                .WithMany()
+                .HasForeignKey(oi => oi.MenuItemId)
+                .OnDelete(DeleteBehavior.Restrict);
 
-            // Optional: Map MENUITEM to existing table
-            // modelBuilder.Entity<Entities.MenuItem>()
-            //     .ToTable("MenuItems");
+            // ===== Stock → MenuItem =====
+            modelBuilder.Entity<Stock>()
+                .HasOne(s => s.MenuItem)
+                .WithMany()
+                .HasForeignKey(s => s.MenuItemId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // ===== GRNItem → MenuItem =====
+            modelBuilder.Entity<GRNItem>()
+                .HasOne(g => g.MenuItem)
+                .WithMany()
+                .HasForeignKey(g => g.MenuItemId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // ===== GRNItem → GRN (FIXED) =====
+            modelBuilder.Entity<GRNItem>()
+                .HasOne(g => g.GRN)
+                .WithMany(grn => grn.Items) // GRN must have: public ICollection<GRNItem> Items { get; set; }
+                .HasForeignKey(g => g.GRNId)
+                .HasConstraintName("FK_GRNItem_GRN")
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // ===== Decimal / int precision =====
+            modelBuilder.Entity<GRNItem>().Property(p => p.Price).HasColumnType("decimal(18,2)");
+            modelBuilder.Entity<OrderItem>().Property(p => p.PricePerItem).HasColumnType("decimal(18,2)");
+            modelBuilder.Entity<OrderItem>().Property(p => p.TotalPrice).HasColumnType("decimal(18,2)");
+            modelBuilder.Entity<Stock>().Property(s => s.Quantity).HasColumnType("int"); // integer quantity
         }
     }
 }

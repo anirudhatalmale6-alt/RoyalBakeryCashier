@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RoyalBakeryCashier.Data.Entities
@@ -16,14 +9,18 @@ namespace RoyalBakeryCashier.Data.Entities
         [Key]
         public int Id { get; set; }
 
-        public int OrderId { get; set; }           // FK
+        public int OrderId { get; set; }
         public int MenuItemId { get; set; }
 
         public int Quantity { get; set; }
         public decimal PricePerItem { get; set; }
         public decimal TotalPrice { get; set; }
 
-        // optional nav property
-        public Order Order { get; set; }
+        // Navigation properties (nullable to avoid EF errors)
+        [ForeignKey(nameof(OrderId))]
+        public Order? Order { get; set; }
+
+        [ForeignKey(nameof(MenuItemId))]
+        public MenuItem? MenuItem { get; set; }
     }
 }

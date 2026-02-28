@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace RoyalBakeryCashier.Data.Entities
 {
@@ -14,7 +10,7 @@ namespace RoyalBakeryCashier.Data.Entities
 
         public int OrderId { get; set; }
 
-        // paymentType: 0 = Cash, 1 = Card
+        // 0 = Cash, 1 = Card
         public int PaymentType { get; set; }
 
         public decimal TenderAmount { get; set; }
