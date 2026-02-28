@@ -25,17 +25,19 @@
                        TextColor="White"
                        HorizontalOptions="Center"/>
 
-                <!-- Categories -->
+                <!-- Categories — large 3-column grid -->
                 <Frame BackgroundColor="{StaticResource CardBg}"
                        Padding="10"
                        CornerRadius="12"
                        BorderColor="{StaticResource Gray600}">
 
-                    <ScrollView Orientation="Horizontal">
-                        <HorizontalStackLayout
-                            x:Name="CategoryStack"
-                            Spacing="12"/>
-                    </ScrollView>
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Categories" FontAttributes="Bold" FontSize="16" TextColor="White"/>
+                        <Grid x:Name="CategoryGrid"
+                              ColumnDefinitions="*,*,*"
+                              ColumnSpacing="8"
+                              RowSpacing="8"/>
+                    </VerticalStackLayout>
                 </Frame>
 
                 <!-- Items -->
@@ -50,7 +52,6 @@
                                FontSize="20"
                                TextColor="White"/>
 
-                        <!-- FIXED: Added Orientation -->
                         <CollectionView x:Name="ItemsCollectionView"
                                         SelectionMode="Single"
                                         SelectionChanged="ItemsCollectionView_SelectionChanged">
@@ -101,8 +102,8 @@
                CornerRadius="12"
                BorderColor="{StaticResource Gray600}">
 
-            <Grid RowDefinitions="Auto,*,Auto,Auto,Auto"
-                  RowSpacing="10">
+            <Grid RowDefinitions="Auto,*,Auto,Auto,Auto,Auto"
+                  RowSpacing="8">
 
                 <!-- Title -->
                 <Label Text="Bill"
@@ -172,11 +173,6 @@
                                        Spacing="10">
 
                     <Label x:Name="TotalLabel" Text="Total: LKR 0.00" TextColor="{StaticResource TotalHighlight}" FontSize="16" FontAttributes="Bold"/>
-
-                    <Button Text="Place Order"
-                            BackgroundColor="{StaticResource PlaceOrderBtn}"
-                            TextColor="White"
-                            Clicked="PlaceOrder_Clicked"/>
                 </HorizontalStackLayout>
 
                 <!-- Quantity -->
@@ -189,39 +185,51 @@
                        IsReadOnly="True"
                        Keyboard="Numeric"/>
 
-                <!-- KEYPAD -->
+                <!-- KEYPAD — bigger buttons, 0 in center -->
                 <Grid Grid.Row="4"
                       RowDefinitions="*,*,*,*"
                       ColumnDefinitions="*,*,*"
-                      ColumnSpacing="5"
-                      RowSpacing="5">
+                      ColumnSpacing="6"
+                      RowSpacing="6">
 
-                    <Button Text="1" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
-                    <Button Grid.Column="1" Text="2" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
-                    <Button Grid.Column="2" Text="3" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
+                    <Button Text="1" HeightRequest="58" FontSize="20" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
+                    <Button Grid.Column="1" Text="2" HeightRequest="58" FontSize="20" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
+                    <Button Grid.Column="2" Text="3" HeightRequest="58" FontSize="20" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
 
-                    <Button Grid.Row="1" Text="4" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
-                    <Button Grid.Row="1" Grid.Column="1" Text="5" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
-                    <Button Grid.Row="1" Grid.Column="2" Text="6" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
+                    <Button Grid.Row="1" Text="4" HeightRequest="58" FontSize="20" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
+                    <Button Grid.Row="1" Grid.Column="1" Text="5" HeightRequest="58" FontSize="20" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
+                    <Button Grid.Row="1" Grid.Column="2" Text="6" HeightRequest="58" FontSize="20" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
 
-                    <Button Grid.Row="2" Text="7" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
-                    <Button Grid.Row="2" Grid.Column="1" Text="8" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
-                    <Button Grid.Row="2" Grid.Column="2" Text="9" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
+                    <Button Grid.Row="2" Text="7" HeightRequest="58" FontSize="20" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
+                    <Button Grid.Row="2" Grid.Column="1" Text="8" HeightRequest="58" FontSize="20" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
+                    <Button Grid.Row="2" Grid.Column="2" Text="9" HeightRequest="58" FontSize="20" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
 
-                    <Button Grid.Row="3" Text="0" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
-
-                    <Button Grid.Row="3" Grid.Column="1"
-                            Text="Clear"
+                    <Button Grid.Row="3" Text="Clear" HeightRequest="58" FontSize="16"
                             BackgroundColor="{StaticResource ClearBtn}"
                             TextColor="White"
                             Clicked="ClearKeypad_Clicked"/>
 
+                    <Button Grid.Row="3" Grid.Column="1" Text="0" HeightRequest="58" FontSize="20"
+                            BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}"
+                            Clicked="Keypad_Clicked"/>
+
                     <Button Grid.Row="3" Grid.Column="2"
-                            Text="CLR CART"
+                            Text="CLR CART" HeightRequest="58" FontSize="14"
                             BackgroundColor="{StaticResource ClearCartBtn}"
                             TextColor="{StaticResource NumpadText}"
                             Clicked="ClearCart_Clicked"/>
                 </Grid>
+
+                <!-- PAY BUTTON below keypad -->
+                <Button Grid.Row="5"
+                        Text="Pay"
+                        BackgroundColor="{StaticResource PlaceOrderBtn}"
+                        TextColor="White"
+                        FontSize="20"
+                        FontAttributes="Bold"
+                        HeightRequest="56"
+                        CornerRadius="10"
+                        Clicked="PlaceOrder_Clicked"/>
 
             </Grid>
 

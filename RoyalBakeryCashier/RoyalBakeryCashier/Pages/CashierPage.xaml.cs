@@ -29,26 +29,52 @@ namespace RoyalBakeryCashier.Pages
             LoadItems();
         }
 
+        // Category color palette matching reference design
+        private static readonly Color[] _categoryColors = new[]
+        {
+            Color.FromArgb("#607D8B"), // All - grey
+            Color.FromArgb("#2196F3"), // Bread - blue
+            Color.FromArgb("#9C27B0"), // Pastries - purple
+            Color.FromArgb("#FF9800"), // Cakes - orange
+            Color.FromArgb("#4CAF50"), // Drinks - green
+            Color.FromArgb("#F44336"), // Specials - red
+        };
+
         private void LoadCategories()
         {
             var categories = _dbContext.MenuCategories.ToList();
-            CategoryStack.Children.Clear();
-            CategoryStack.Children.Add(CreateCategoryButton("All", null, null));
+            CategoryGrid.Children.Clear();
+            CategoryGrid.RowDefinitions.Clear();
+
+            var allButtons = new List<(string Name, int? CatId)> { ("All", null) };
             foreach (var cat in categories)
-                CategoryStack.Children.Add(CreateCategoryButton(cat.Name, null, cat.Id));
+                allButtons.Add((cat.Name, cat.Id));
+
+            int rows = (int)Math.Ceiling(allButtons.Count / 3.0);
+            for (int r = 0; r < rows; r++)
+                CategoryGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+
+            for (int i = 0; i < allButtons.Count; i++)
+            {
+                var (name, catId) = allButtons[i];
+                var colorIndex = i % _categoryColors.Length;
+                var btn = CreateCategoryButton(name, catId, _categoryColors[colorIndex]);
+                Grid.SetRow(btn, i / 3);
+                Grid.SetColumn(btn, i % 3);
+                CategoryGrid.Children.Add(btn);
+            }
         }
 
-        private Button CreateCategoryButton(string name, string emoji, int? categoryId)
+        private Button CreateCategoryButton(string name, int? categoryId, Color bgColor)
         {
             var btn = new Button
             {
                 Text = name,
-                BackgroundColor = Colors.LightBlue,
-                TextColor = Colors.Black,
+                BackgroundColor = bgColor,
+                TextColor = Colors.White,
                 CornerRadius = 8,
-                FontSize = 14,
-                HeightRequest = 50,
-                WidthRequest = 120
+                FontSize = 16,
+                HeightRequest = 70,
             };
             btn.Clicked += (s, e) => FilterItems(categoryId);
             return btn;
