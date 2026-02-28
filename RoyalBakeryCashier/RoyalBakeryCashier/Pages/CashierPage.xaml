@@ -7,7 +7,7 @@
     Title="POS Window">
 
     <Grid RowDefinitions="Auto,*"
-          ColumnDefinitions="3.5*,1*"
+          ColumnDefinitions="2.8*,1.2*"
           Padding="15"
           ColumnSpacing="10">
 
