@@ -59,44 +59,37 @@
                             <CollectionView.ItemsLayout>
                                 <GridItemsLayout Orientation="Vertical"
                                                  Span="5"
-                                                 HorizontalItemSpacing="10"
-                                                 VerticalItemSpacing="10"/>
+                                                 HorizontalItemSpacing="8"
+                                                 VerticalItemSpacing="8"/>
                             </CollectionView.ItemsLayout>
 
                             <CollectionView.ItemTemplate>
                                 <DataTemplate>
-                                    <Frame Padding="12"
+                                    <Frame Padding="10,8"
                                            Margin="0"
                                            BackgroundColor="{StaticResource ItemRowBg}"
-                                           CornerRadius="10"
+                                           CornerRadius="8"
                                            BorderColor="{StaticResource Gray600}"
                                            HorizontalOptions="FillAndExpand">
 
-                                        <VerticalStackLayout Spacing="6"
-                                                             HorizontalOptions="Center">
-                                            <Image Source="items.png"
-                                                   HeightRequest="80"
-                                                   WidthRequest="80"
-                                                   Aspect="AspectFit"
-                                                   HorizontalOptions="Center"/>
+                                        <VerticalStackLayout Spacing="4"
+                                                             HorizontalOptions="Center"
+                                                             VerticalOptions="Center">
 
                                             <Label Text="{Binding Name}"
-                                                   FontSize="14"
+                                                   FontSize="15"
+                                                   FontAttributes="Bold"
                                                    TextColor="White"
                                                    HorizontalTextAlignment="Center"
                                                    LineBreakMode="TailTruncation"
                                                    MaxLines="1"/>
 
                                             <Label Text="{Binding Price, StringFormat='LKR {0:F2}'}"
-                                                   FontSize="13"
+                                                   FontSize="14"
                                                    FontAttributes="Bold"
                                                    TextColor="{StaticResource TotalHighlight}"
                                                    HorizontalTextAlignment="Center"/>
 
-                                            <Label Text="{Binding AvailableStock, StringFormat='Stock: {0}'}"
-                                                   FontSize="11"
-                                                   TextColor="{StaticResource Gray300}"
-                                                   HorizontalTextAlignment="Center"/>
                                         </VerticalStackLayout>
 
                                     </Frame>
