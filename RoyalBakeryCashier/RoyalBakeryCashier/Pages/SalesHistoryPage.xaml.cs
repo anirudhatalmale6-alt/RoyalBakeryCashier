@@ -50,9 +50,101 @@ public partial class SalesHistoryPage : ContentPage
 
             string receipt = BuildReceiptText(sale);
 
-            // Show receipt in a simple popup
-            await DisplayAlert($"Receipt — {sale.InvoiceNumber}", receipt, "Close");
+            // Show receipt on white background like real thermal paper
+            await Navigation.PushAsync(new ReceiptViewPage(sale.InvoiceNumber, receipt, sale, this));
         }
+    }
+
+    /// <summary>
+    /// White receipt viewer — looks like actual thermal receipt paper
+    /// </summary>
+    public class ReceiptViewPage : ContentPage
+    {
+        public ReceiptViewPage(string invoiceNumber, string receiptText, Sale sale, SalesHistoryPage parent)
+        {
+            Title = invoiceNumber;
+            BackgroundColor = Color.FromArgb("#1A1A1A");
+
+            Content = new ScrollView
+            {
+                Content = new VerticalStackLayout
+                {
+                    Padding = new Thickness(20),
+                    Spacing = 12,
+                    HorizontalOptions = LayoutOptions.Center,
+                    Children =
+                    {
+                        // White receipt paper
+                        new Frame
+                        {
+                            BackgroundColor = Colors.White,
+                            CornerRadius = 4,
+                            Padding = new Thickness(16, 20),
+                            WidthRequest = 320,
+                            HasShadow = true,
+                            BorderColor = Color.FromArgb("#CCCCCC"),
+                            Content = new Label
+                            {
+                                Text = receiptText,
+                                FontFamily = "Courier New",
+                                FontSize = 11,
+                                TextColor = Colors.Black,
+                                LineHeight = 1.4,
+                            }
+                        },
+
+                        // Reprint button
+                        new Button
+                        {
+                            Text = "Reprint",
+                            BackgroundColor = Color.FromArgb("#9C27B0"),
+                            TextColor = Colors.White,
+                            FontSize = 16,
+                            FontAttributes = FontAttributes.Bold,
+                            HeightRequest = 46,
+                            CornerRadius = 10,
+                            WidthRequest = 320,
+                            HorizontalOptions = LayoutOptions.Center
+                        },
+
+                        // Back button
+                        new Button
+                        {
+                            Text = "Back",
+                            BackgroundColor = Color.FromArgb("#757575"),
+                            TextColor = Colors.White,
+                            FontSize = 15,
+                            HeightRequest = 42,
+                            CornerRadius = 10,
+                            WidthRequest = 320,
+                            HorizontalOptions = LayoutOptions.Center
+                        }
+                    }
+                }
+            };
+
+            // Wire up buttons
+            var stack = (VerticalStackLayout)((ScrollView)Content).Content;
+            var reprintBtn = (Button)stack.Children[1];
+            var backBtn = (Button)stack.Children[2];
+
+            reprintBtn.Clicked += async (s, e) =>
+            {
+                await parent.ReprintSale(sale);
+            };
+
+            backBtn.Clicked += async (s, e) =>
+            {
+                await Navigation.PopAsync();
+            };
+        }
+    }
+
+    public async Task ReprintSale(Sale sale)
+    {
+        string receipt = BuildReceiptText(sale);
+        await PrintToThermal(receipt);
+        await DisplayAlert("Reprint", $"{sale.InvoiceNumber} sent to printer.", "OK");
     }
 
     private async void Reprint_Clicked(object sender, EventArgs e)
@@ -62,10 +154,7 @@ public partial class SalesHistoryPage : ContentPage
             var sale = _db.Sales.Include(s => s.Items).FirstOrDefault(s => s.Id == saleId);
             if (sale == null) return;
 
-            string receipt = BuildReceiptText(sale);
-            await PrintToThermal(receipt);
-
-            await DisplayAlert("Reprint", $"{sale.InvoiceNumber} sent to printer.", "OK");
+            await ReprintSale(sale);
         }
     }
 
