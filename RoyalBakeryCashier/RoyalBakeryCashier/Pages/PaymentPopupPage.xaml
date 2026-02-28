@@ -2,43 +2,47 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="RoyalBakeryCashier.Pages.PaymentPopupPage"
+             BackgroundColor="{StaticResource PageBg}"
              Title="Payment"
              Padding="16">
     <VerticalStackLayout Spacing="12">
-        <Label Text="Payment" FontSize="20" FontAttributes="Bold" HorizontalOptions="Center"/>
+        <Label Text="Payment" FontSize="20" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center"/>
 
-        <Label Text="Method" FontAttributes="Bold"/>
+        <Label Text="Method" FontAttributes="Bold" TextColor="White"/>
         <HorizontalStackLayout Spacing="8">
-            <RadioButton x:Name="CashRadio" Content="Cash" GroupName="method" IsChecked="True"/>
-            <RadioButton x:Name="CardRadio" Content="Card" GroupName="method"/>
+            <RadioButton x:Name="CashRadio" Content="Cash" GroupName="method" IsChecked="True" TextColor="White"/>
+            <RadioButton x:Name="CardRadio" Content="Card" GroupName="method" TextColor="White"/>
         </HorizontalStackLayout>
 
-        <Label Text="Tender amount" FontAttributes="Bold"/>
+        <Label Text="Tender amount" FontAttributes="Bold" TextColor="White"/>
         <Entry x:Name="TenderEntry"
                Keyboard="Numeric"
                Text="{x:Null}"
                HorizontalTextAlignment="End"
                FontSize="18"
+               TextColor="White"
+               BackgroundColor="{StaticResource InputBg}"
+               PlaceholderColor="{StaticResource Gray400}"
                Placeholder="0.00" />
 
         <Label x:Name="BalanceLabel"
                Text="Change: 0.00"
                FontAttributes="Bold"
                HorizontalOptions="End"
-               TextColor="Green"/>
+               TextColor="#4CAF50"/>
 
         <!-- Stock problems area (hidden when no shortages) -->
-        <Frame x:Name="StockProblemsFrame" IsVisible="False" BackgroundColor="#FFF3E0" CornerRadius="6" Padding="8">
+        <Frame x:Name="StockProblemsFrame" IsVisible="False" BackgroundColor="#4A2800" CornerRadius="6" Padding="8" BorderColor="#FF9800">
             <VerticalStackLayout Spacing="6">
-                <Label Text="Stock issues:" FontAttributes="Bold" TextColor="#D84315"/>
+                <Label Text="Stock issues:" FontAttributes="Bold" TextColor="#FF9800"/>
                 <StackLayout x:Name="StockProblemsList" Spacing="4"/>
-                <Label Text="Please adjust quantities before completing payment." FontSize="12" TextColor="#D84315"/>
+                <Label Text="Please adjust quantities before completing payment." FontSize="12" TextColor="#FFB74D"/>
             </VerticalStackLayout>
         </Frame>
 
         <HorizontalStackLayout Spacing="12" HorizontalOptions="Fill">
-            <Button x:Name="CancelButton" Text="Cancel" BackgroundColor="#BDBDBD" HorizontalOptions="Start" Clicked="OnCancelClicked" />
-            <Button x:Name="ConfirmButton" Text="Confirm" BackgroundColor="#1976D2" TextColor="White" HorizontalOptions="End" Clicked="OnConfirmClicked" />
+            <Button x:Name="CancelButton" Text="Cancel" BackgroundColor="{StaticResource CancelBtn}" TextColor="White" HorizontalOptions="Start" Clicked="OnCancelClicked" />
+            <Button x:Name="ConfirmButton" Text="Confirm" BackgroundColor="{StaticResource ConfirmBtn}" TextColor="White" HorizontalOptions="End" Clicked="OnConfirmClicked" />
         </HorizontalStackLayout>
     </VerticalStackLayout>
 </ContentPage>

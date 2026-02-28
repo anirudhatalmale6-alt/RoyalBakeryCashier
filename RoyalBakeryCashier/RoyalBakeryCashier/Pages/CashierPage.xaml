@@ -3,7 +3,7 @@
     x:Class="RoyalBakeryCashier.Pages.CashierPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    BackgroundColor="#F5F5F5"
+    BackgroundColor="{StaticResource PageBg}"
     Title="POS Window">
 
     <Grid RowDefinitions="Auto,*"
@@ -22,13 +22,14 @@
 
                 <Label Text="Cashier POS"
                        FontSize="28"
+                       TextColor="White"
                        HorizontalOptions="Center"/>
 
                 <!-- Categories -->
-                <Frame BackgroundColor="White"
+                <Frame BackgroundColor="{StaticResource CardBg}"
                        Padding="10"
                        CornerRadius="12"
-                       HasShadow="True">
+                       BorderColor="{StaticResource Gray600}">
 
                     <ScrollView Orientation="Horizontal">
                         <HorizontalStackLayout
@@ -38,15 +39,16 @@
                 </Frame>
 
                 <!-- Items -->
-                <Frame BackgroundColor="White"
+                <Frame BackgroundColor="{StaticResource CardBg}"
                        Padding="10"
                        CornerRadius="12"
-                       HasShadow="True">
+                       BorderColor="{StaticResource Gray600}">
 
                     <VerticalStackLayout Spacing="10">
 
                         <Label Text="Items"
-                               FontSize="20"/>
+                               FontSize="20"
+                               TextColor="White"/>
 
                         <!-- FIXED: Added Orientation -->
                         <CollectionView x:Name="ItemsCollectionView"
@@ -60,8 +62,9 @@
                             <CollectionView.ItemTemplate>
                                 <DataTemplate>
                                     <Frame Padding="8"
-                                           BackgroundColor="#f9f9f9"
-                                           CornerRadius="10">
+                                           BackgroundColor="{StaticResource ItemRowBg}"
+                                           CornerRadius="10"
+                                           BorderColor="{StaticResource Gray600}">
 
                                         <VerticalStackLayout Spacing="6">
                                             <Image Source="items.png"
@@ -69,13 +72,13 @@
                                                    WidthRequest="90"
                                                    HorizontalOptions="Center"/>
 
-                                            <Label Text="{Binding Name}" FontSize="14"/>
+                                            <Label Text="{Binding Name}" FontSize="14" TextColor="White"/>
 
                                             <Label Text="{Binding Price, StringFormat='LKR {0:F2}'}"
-                                                   FontSize="12"/>
+                                                   FontSize="12" TextColor="{StaticResource TotalHighlight}"/>
 
                                             <Label Text="{Binding AvailableStock, StringFormat='Stock: {0}'}"
-                                                   FontSize="10"/>
+                                                   FontSize="10" TextColor="{StaticResource Gray300}"/>
                                         </VerticalStackLayout>
 
                                     </Frame>
@@ -93,18 +96,18 @@
         <!-- ================= RIGHT SIDE (RESPONSIVE CART) ================= -->
         <Frame Grid.Row="1"
                Grid.Column="1"
-               BackgroundColor="White"
+               BackgroundColor="{StaticResource CardBg}"
                Padding="10"
                CornerRadius="12"
-               HasShadow="True">
+               BorderColor="{StaticResource Gray600}">
 
-            <!-- ⭐ RESPONSIVE GRID (KEY FIX) -->
             <Grid RowDefinitions="Auto,*,Auto,Auto,Auto"
                   RowSpacing="10">
 
                 <!-- Title -->
                 <Label Text="Bill"
                        FontSize="20"
+                       TextColor="White"
                        HorizontalOptions="Center"/>
 
                 <!-- Cart fills available space and scrolls -->
@@ -116,12 +119,14 @@
                         <DataTemplate>
                             <Frame Padding="8"
                                    Margin="0,4"
-                                   BackgroundColor="#E0F2F1"
-                                   CornerRadius="8">
+                                   BackgroundColor="{StaticResource ItemRowBg}"
+                                   CornerRadius="8"
+                                   BorderColor="{StaticResource Gray600}">
 
                                 <Grid ColumnDefinitions="*,Auto,Auto">
 
                                     <Label Text="{Binding Name}"
+                                           TextColor="White"
                                            VerticalOptions="Center"/>
 
                                     <HorizontalStackLayout Grid.Column="1"
@@ -130,22 +135,28 @@
                                         <Button Text="-"
                                                 WidthRequest="30"
                                                 HeightRequest="30"
+                                                BackgroundColor="{StaticResource CatSpecials}"
+                                                TextColor="White"
                                                 Clicked="DecreaseQuantity_Clicked"
                                                 CommandParameter="{Binding .}"/>
 
                                         <Label Text="{Binding Quantity}"
                                                WidthRequest="25"
+                                               TextColor="White"
                                                HorizontalTextAlignment="Center"/>
 
                                         <Button Text="+"
                                                 WidthRequest="30"
                                                 HeightRequest="30"
+                                                BackgroundColor="{StaticResource PlaceOrderBtn}"
+                                                TextColor="White"
                                                 Clicked="IncreaseQuantity_Clicked"
                                                 CommandParameter="{Binding .}"/>
                                     </HorizontalStackLayout>
 
                                     <Label Grid.Column="2"
                                            Text="{Binding Total, StringFormat='LKR {0:F2}'}"
+                                           TextColor="{StaticResource TotalHighlight}"
                                            HorizontalOptions="End"/>
                                 </Grid>
 
@@ -160,10 +171,10 @@
                                        HorizontalOptions="End"
                                        Spacing="10">
 
-                    <Label x:Name="TotalLabel" Text="Total: LKR 0.00"/>
+                    <Label x:Name="TotalLabel" Text="Total: LKR 0.00" TextColor="{StaticResource TotalHighlight}" FontSize="16" FontAttributes="Bold"/>
 
                     <Button Text="Place Order"
-                            BackgroundColor="#26A69A"
+                            BackgroundColor="{StaticResource PlaceOrderBtn}"
                             TextColor="White"
                             Clicked="PlaceOrder_Clicked"/>
                 </HorizontalStackLayout>
@@ -172,40 +183,43 @@
                 <Entry Grid.Row="3"
                        x:Name="QuantityEntry"
                        Placeholder="Type quantity then tap item"
+                       PlaceholderColor="{StaticResource Gray400}"
+                       TextColor="White"
+                       BackgroundColor="{StaticResource InputBg}"
                        IsReadOnly="True"
                        Keyboard="Numeric"/>
 
-                <!-- ⭐ KEYPAD AUTO-RESIZES -->
+                <!-- KEYPAD -->
                 <Grid Grid.Row="4"
                       RowDefinitions="*,*,*,*"
                       ColumnDefinitions="*,*,*"
                       ColumnSpacing="5"
                       RowSpacing="5">
 
-                    <Button Text="1" Clicked="Keypad_Clicked"/>
-                    <Button Grid.Column="1" Text="2" Clicked="Keypad_Clicked"/>
-                    <Button Grid.Column="2" Text="3" Clicked="Keypad_Clicked"/>
+                    <Button Text="1" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
+                    <Button Grid.Column="1" Text="2" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
+                    <Button Grid.Column="2" Text="3" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
 
-                    <Button Grid.Row="1" Text="4" Clicked="Keypad_Clicked"/>
-                    <Button Grid.Row="1" Grid.Column="1" Text="5" Clicked="Keypad_Clicked"/>
-                    <Button Grid.Row="1" Grid.Column="2" Text="6" Clicked="Keypad_Clicked"/>
+                    <Button Grid.Row="1" Text="4" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
+                    <Button Grid.Row="1" Grid.Column="1" Text="5" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
+                    <Button Grid.Row="1" Grid.Column="2" Text="6" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
 
-                    <Button Grid.Row="2" Text="7" Clicked="Keypad_Clicked"/>
-                    <Button Grid.Row="2" Grid.Column="1" Text="8" Clicked="Keypad_Clicked"/>
-                    <Button Grid.Row="2" Grid.Column="2" Text="9" Clicked="Keypad_Clicked"/>
+                    <Button Grid.Row="2" Text="7" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
+                    <Button Grid.Row="2" Grid.Column="1" Text="8" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
+                    <Button Grid.Row="2" Grid.Column="2" Text="9" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
 
-                    <Button Grid.Row="3" Text="0" Clicked="Keypad_Clicked"/>
+                    <Button Grid.Row="3" Text="0" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
 
                     <Button Grid.Row="3" Grid.Column="1"
                             Text="Clear"
-                            BackgroundColor="#FF8A65"
+                            BackgroundColor="{StaticResource ClearBtn}"
                             TextColor="White"
                             Clicked="ClearKeypad_Clicked"/>
 
                     <Button Grid.Row="3" Grid.Column="2"
                             Text="CLR CART"
-                            BackgroundColor="#FF7043"
-                            TextColor="White"
+                            BackgroundColor="{StaticResource ClearCartBtn}"
+                            TextColor="{StaticResource NumpadText}"
                             Clicked="ClearCart_Clicked"/>
                 </Grid>
 

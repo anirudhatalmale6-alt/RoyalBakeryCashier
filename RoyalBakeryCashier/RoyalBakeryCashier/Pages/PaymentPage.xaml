@@ -2,6 +2,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     x:Class="RoyalBakeryCashier.Pages.PaymentPage"
+    BackgroundColor="{StaticResource PageBg}"
     Title="Payment">
 
     <ScrollView>
@@ -10,19 +11,24 @@
             <Label Text="Payment"
                    FontSize="26"
                    FontAttributes="Bold"
+                   TextColor="White"
                    HorizontalOptions="Center" />
 
             <Label x:Name="TotalLabel"
                    FontSize="20"
-                   TextColor="Green"
+                   TextColor="{StaticResource TotalHighlight}"
                    HorizontalOptions="Center" />
 
             <!-- Payment Method -->
             <Label Text="Select Payment Method"
                    FontSize="16"
-                   FontAttributes="Bold"/>
+                   FontAttributes="Bold"
+                   TextColor="White"/>
             <Picker x:Name="MethodPicker"
                     Title="Payment Method"
+                    TextColor="White"
+                    TitleColor="{StaticResource Gray400}"
+                    BackgroundColor="{StaticResource InputBg}"
                     SelectedIndexChanged="MethodChanged">
                 <Picker.Items>
                     <x:String>Cash</x:String>
@@ -34,9 +40,13 @@
             <!-- Cash Entry -->
             <Label Text="Cash Amount"
                    FontSize="16"
-                   FontAttributes="Bold"/>
+                   FontAttributes="Bold"
+                   TextColor="White"/>
             <Entry x:Name="CashEntry"
                    Placeholder="Enter cash amount"
+                   PlaceholderColor="{StaticResource Gray400}"
+                   TextColor="White"
+                   BackgroundColor="{StaticResource InputBg}"
                    Keyboard="Numeric"
                    MaxLength="6"
                    TextChanged="CashChanged"/>
@@ -44,9 +54,13 @@
             <!-- Card Entry -->
             <Label Text="Card Amount"
                    FontSize="16"
-                   FontAttributes="Bold"/>
+                   FontAttributes="Bold"
+                   TextColor="White"/>
             <Entry x:Name="CardEntry"
                    Placeholder="Enter card amount"
+                   PlaceholderColor="{StaticResource Gray400}"
+                   TextColor="White"
+                   BackgroundColor="{StaticResource InputBg}"
                    Keyboard="Numeric"
                    IsVisible="False"
                    MaxLength="6"
@@ -67,25 +81,25 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- Row 1 -->
-                <Button Text="1" Grid.Row="0" Grid.Column="0" Clicked="Keypad_Clicked"/>
-                <Button Text="2" Grid.Row="0" Grid.Column="1" Clicked="Keypad_Clicked"/>
-                <Button Text="3" Grid.Row="0" Grid.Column="2" Clicked="Keypad_Clicked"/>
+                <Button Text="1" Grid.Row="0" Grid.Column="0" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
+                <Button Text="2" Grid.Row="0" Grid.Column="1" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
+                <Button Text="3" Grid.Row="0" Grid.Column="2" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
 
                 <!-- Row 2 -->
-                <Button Text="4" Grid.Row="1" Grid.Column="0" Clicked="Keypad_Clicked"/>
-                <Button Text="5" Grid.Row="1" Grid.Column="1" Clicked="Keypad_Clicked"/>
-                <Button Text="6" Grid.Row="1" Grid.Column="2" Clicked="Keypad_Clicked"/>
+                <Button Text="4" Grid.Row="1" Grid.Column="0" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
+                <Button Text="5" Grid.Row="1" Grid.Column="1" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
+                <Button Text="6" Grid.Row="1" Grid.Column="2" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
 
                 <!-- Row 3 -->
-                <Button Text="7" Grid.Row="2" Grid.Column="0" Clicked="Keypad_Clicked"/>
-                <Button Text="8" Grid.Row="2" Grid.Column="1" Clicked="Keypad_Clicked"/>
-                <Button Text="9" Grid.Row="2" Grid.Column="2" Clicked="Keypad_Clicked"/>
+                <Button Text="7" Grid.Row="2" Grid.Column="0" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
+                <Button Text="8" Grid.Row="2" Grid.Column="1" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
+                <Button Text="9" Grid.Row="2" Grid.Column="2" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
 
                 <!-- Row 4 -->
-                <Button Text="Clear" Grid.Row="3" Grid.Column="0" Clicked="ClearKeypad_Clicked"/>
-                <Button Text="0" Grid.Row="3" Grid.Column="1" Clicked="Keypad_Clicked"/>
+                <Button Text="Clear" Grid.Row="3" Grid.Column="0" BackgroundColor="{StaticResource ClearBtn}" TextColor="White" Clicked="ClearKeypad_Clicked"/>
+                <Button Text="0" Grid.Row="3" Grid.Column="1" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
                 <Button Text="Confirm" Grid.Row="3" Grid.Column="2" Clicked="Confirm_Clicked"
-                        BackgroundColor="Green"
+                        BackgroundColor="{StaticResource PlaceOrderBtn}"
                         TextColor="White"/>
             </Grid>
 
