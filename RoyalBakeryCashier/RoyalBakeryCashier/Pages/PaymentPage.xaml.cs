@@ -1,4 +1,4 @@
-﻿using RoyalBakeryCashier.Data;
+using RoyalBakeryCashier.Data;
 using RoyalBakeryCashier.Data.Entities;
 using RoyalBakeryCashier.Models;
 using Microsoft.EntityFrameworkCore;
@@ -30,68 +30,114 @@ public partial class PaymentPage : ContentPage
 
         _total = _order.TotalAmount;
 
-        TotalLabel.Text = $"Total: LKR {_total:F2}";
-        MethodPicker.SelectedIndex = 0;
-        CashEntry.Text = ((int)_total).ToString();
+        TotalLabel.Text = $"LKR {_total:N2}";
 
-        CashEntry.Focused += (s, e) => _activeEntry = CashEntry;
-        CardEntry.Focused += (s, e) => _activeEntry = CardEntry;
+        // Default: full amount in cash
+        CashEntry.Text = ((int)_total).ToString();
+        CardEntry.Text = "0";
+
+        CashEntry.Focused += (s, e) => SetActiveEntry(CashEntry);
+        CardEntry.Focused += (s, e) => SetActiveEntry(CardEntry);
 
         _activeEntry = CashEntry;
+        UpdateBalance();
     }
 
-    private void MethodChanged(object sender, EventArgs e)
+    private void SetActiveEntry(Entry entry)
     {
-        var type = MethodPicker.SelectedItem?.ToString();
-        if (type == "Both")
+        _activeEntry = entry;
+        // Highlight the active tab
+        CashTabBtn.BackgroundColor = entry == CashEntry
+            ? Color.FromArgb("#2196F3")
+            : Color.FromArgb("#404040");
+        CardTabBtn.BackgroundColor = entry == CardEntry
+            ? Color.FromArgb("#2196F3")
+            : Color.FromArgb("#404040");
+    }
+
+    private void CashTab_Clicked(object sender, EventArgs e)
+    {
+        SetActiveEntry(CashEntry);
+        CashEntry.Focus();
+    }
+
+    private void CardTab_Clicked(object sender, EventArgs e)
+    {
+        SetActiveEntry(CardEntry);
+        CardEntry.Focus();
+    }
+
+    private void AmountChanged(object sender, TextChangedEventArgs e)
+    {
+        UpdateBalance();
+    }
+
+    private void UpdateBalance()
+    {
+        decimal cash = decimal.TryParse(CashEntry.Text, out var c) ? c : 0;
+        decimal card = decimal.TryParse(CardEntry.Text, out var d) ? d : 0;
+        decimal paid = cash + card;
+        decimal remaining = _total - paid;
+
+        if (remaining > 0)
         {
-            CardEntry.IsVisible = true;
-            CashEntry.Text = "0";
-            CardEntry.Text = ((int)_total).ToString();
+            // Still owes money
+            BalanceFrame.IsVisible = true;
+            ChangeFrame.IsVisible = false;
+            BalanceLabel.Text = $"LKR {remaining:N2}";
+            BalanceLabel.TextColor = Colors.OrangeRed;
+            BalanceTitle.Text = "Remaining";
+            ConfirmBtn.IsEnabled = false;
+            ConfirmBtn.BackgroundColor = Color.FromArgb("#404040");
+        }
+        else if (remaining == 0)
+        {
+            // Exact payment
+            BalanceFrame.IsVisible = true;
+            ChangeFrame.IsVisible = false;
+            BalanceLabel.Text = "LKR 0.00";
+            BalanceLabel.TextColor = Color.FromArgb("#4CAF50");
+            BalanceTitle.Text = "Balance";
+            ConfirmBtn.IsEnabled = true;
+            ConfirmBtn.BackgroundColor = Color.FromArgb("#4CAF50");
         }
         else
         {
-            CardEntry.IsVisible = false;
-            CashEntry.Text = ((int)_total).ToString();
+            // Overpaid — show change
+            BalanceFrame.IsVisible = false;
+            ChangeFrame.IsVisible = true;
+            ChangeLabel.Text = $"LKR {Math.Abs(remaining):N2}";
+            ConfirmBtn.IsEnabled = true;
+            ConfirmBtn.BackgroundColor = Color.FromArgb("#4CAF50");
         }
-    }
-
-    private void CashChanged(object sender, TextChangedEventArgs e)
-    {
-        if (!CardEntry.IsVisible) return;
-        if (int.TryParse(CashEntry.Text, out var cash))
-            CardEntry.Text = Math.Max(0, (int)_total - cash).ToString();
-    }
-
-    private void CardChanged(object sender, TextChangedEventArgs e)
-    {
-        if (!CardEntry.IsVisible) return;
-        if (int.TryParse(CardEntry.Text, out var card))
-            CashEntry.Text = Math.Max(0, (int)_total - card).ToString();
     }
 
     private void Keypad_Clicked(object sender, EventArgs e)
     {
-        if (sender is Button btn && _activeEntry != null && _activeEntry.Text.Length < 6)
-            _activeEntry.Text += btn.Text;
+        if (sender is Button btn && _activeEntry != null && (_activeEntry.Text?.Length ?? 0) < 8)
+            _activeEntry.Text = (_activeEntry.Text ?? "") + btn.Text;
     }
 
-    private void ClearKeypad_Clicked(object sender, EventArgs e) => _activeEntry.Text = string.Empty;
+    private void ClearKeypad_Clicked(object sender, EventArgs e)
+    {
+        if (_activeEntry != null)
+            _activeEntry.Text = string.Empty;
+    }
 
     private void DeleteKeypad_Clicked(object sender, EventArgs e)
     {
-        if (_activeEntry != null && _activeEntry.Text.Length > 0)
+        if (_activeEntry != null && !string.IsNullOrEmpty(_activeEntry.Text))
             _activeEntry.Text = _activeEntry.Text.Substring(0, _activeEntry.Text.Length - 1);
     }
 
     private async void Confirm_Clicked(object sender, EventArgs e)
     {
-        int cash = int.TryParse(CashEntry.Text, out var c) ? c : 0;
-        int card = int.TryParse(CardEntry.Text, out var d) ? d : 0;
+        decimal cash = decimal.TryParse(CashEntry.Text, out var c) ? c : 0;
+        decimal card = decimal.TryParse(CardEntry.Text, out var d) ? d : 0;
 
-        if (cash + card < (int)_total)
+        if (cash + card < _total)
         {
-            await DisplayAlert("Error", "Payment not enough", "OK");
+            await DisplayAlert("Error", "Payment not enough. Balance must be zero before confirming.", "OK");
             return;
         }
 
@@ -101,6 +147,8 @@ public partial class PaymentPage : ContentPage
             SavePayments(cash, card);
             DeductStock(_order);
             DeductGRNForOrder(_order);
+
+            _order.Status = 0; // Mark as completed
 
             CreatedInvoice = CreateInvoice(_order);
 
@@ -122,7 +170,7 @@ public partial class PaymentPage : ContentPage
         }
     }
 
-    private void SavePayments(int cash, int card)
+    private void SavePayments(decimal cash, decimal card)
     {
         if (cash > 0)
             _db.OrderPayments.Add(new OrderPayments { OrderId = _order.Id, PaymentType = 0, TenderAmount = cash, DateTime = DateTime.Now });
@@ -185,6 +233,8 @@ public partial class PaymentPage : ContentPage
         public ReceiptPage(Invoice invoice)
         {
             Title = "Receipt";
+            BackgroundColor = Color.FromArgb("#1A1A1A");
+
             var sb = new StringBuilder();
             sb.AppendLine("=== Royal Bakery ===");
             sb.AppendLine($"Invoice #: {invoice.OrderId}");
@@ -206,7 +256,9 @@ public partial class PaymentPage : ContentPage
                     Text = sb.ToString(),
                     FontFamily = "Consolas",
                     FontSize = 16,
-                    LineHeight = 1.2
+                    LineHeight = 1.4,
+                    TextColor = Colors.White,
+                    Padding = new Thickness(20)
                 }
             };
         }

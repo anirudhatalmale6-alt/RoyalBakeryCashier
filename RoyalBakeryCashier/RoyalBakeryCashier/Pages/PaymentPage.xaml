@@ -5,8 +5,10 @@
     BackgroundColor="{StaticResource PageBg}"
     Title="Payment">
 
-    <ScrollView>
-        <VerticalStackLayout Padding="25" Spacing="20">
+    <Grid ColumnDefinitions="1.5*,*" ColumnSpacing="12" Padding="20">
+
+        <!-- LEFT: Order summary + payment entries -->
+        <VerticalStackLayout Spacing="12">
 
             <Label Text="Payment"
                    FontSize="26"
@@ -14,65 +16,85 @@
                    TextColor="White"
                    HorizontalOptions="Center" />
 
-            <Label x:Name="TotalLabel"
-                   FontSize="20"
-                   TextColor="{StaticResource TotalHighlight}"
-                   HorizontalOptions="Center" />
+            <!-- Total amount -->
+            <Frame BackgroundColor="{StaticResource ItemRowBg}" CornerRadius="10" Padding="16" BorderColor="{StaticResource Gray600}">
+                <Grid ColumnDefinitions="*,Auto">
+                    <Label Text="Order Total" TextColor="{StaticResource Gray300}" FontSize="18" VerticalOptions="Center"/>
+                    <Label x:Name="TotalLabel" Grid.Column="1" FontSize="24" FontAttributes="Bold"
+                           TextColor="{StaticResource TotalHighlight}" HorizontalOptions="End"/>
+                </Grid>
+            </Frame>
 
-            <!-- Payment Method -->
-            <Label Text="Select Payment Method"
-                   FontSize="16"
-                   FontAttributes="Bold"
-                   TextColor="White"/>
-            <Picker x:Name="MethodPicker"
-                    Title="Payment Method"
-                    TextColor="White"
-                    TitleColor="{StaticResource Gray400}"
-                    BackgroundColor="{StaticResource InputBg}"
-                    SelectedIndexChanged="MethodChanged">
-                <Picker.Items>
-                    <x:String>Cash</x:String>
-                    <x:String>Card</x:String>
-                    <x:String>Both</x:String>
-                </Picker.Items>
-            </Picker>
+            <!-- Cash entry -->
+            <Frame BackgroundColor="{StaticResource CardBg}" CornerRadius="10" Padding="12" BorderColor="{StaticResource Gray600}">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="Cash Amount" FontSize="15" FontAttributes="Bold" TextColor="White"/>
+                    <Entry x:Name="CashEntry"
+                           Placeholder="0.00"
+                           PlaceholderColor="{StaticResource Gray400}"
+                           TextColor="White"
+                           BackgroundColor="{StaticResource InputBg}"
+                           FontSize="20"
+                           HorizontalTextAlignment="End"
+                           Keyboard="Numeric"
+                           TextChanged="AmountChanged"/>
+                </VerticalStackLayout>
+            </Frame>
 
-            <!-- Cash Entry -->
-            <Label Text="Cash Amount"
-                   FontSize="16"
-                   FontAttributes="Bold"
-                   TextColor="White"/>
-            <Entry x:Name="CashEntry"
-                   Placeholder="Enter cash amount"
-                   PlaceholderColor="{StaticResource Gray400}"
-                   TextColor="White"
-                   BackgroundColor="{StaticResource InputBg}"
-                   Keyboard="Numeric"
-                   MaxLength="6"
-                   TextChanged="CashChanged"/>
+            <!-- Card entry -->
+            <Frame BackgroundColor="{StaticResource CardBg}" CornerRadius="10" Padding="12" BorderColor="{StaticResource Gray600}">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="Card Amount" FontSize="15" FontAttributes="Bold" TextColor="White"/>
+                    <Entry x:Name="CardEntry"
+                           Placeholder="0.00"
+                           PlaceholderColor="{StaticResource Gray400}"
+                           TextColor="White"
+                           BackgroundColor="{StaticResource InputBg}"
+                           FontSize="20"
+                           HorizontalTextAlignment="End"
+                           Keyboard="Numeric"
+                           TextChanged="AmountChanged"/>
+                </VerticalStackLayout>
+            </Frame>
 
-            <!-- Card Entry -->
-            <Label Text="Card Amount"
-                   FontSize="16"
-                   FontAttributes="Bold"
-                   TextColor="White"/>
-            <Entry x:Name="CardEntry"
-                   Placeholder="Enter card amount"
-                   PlaceholderColor="{StaticResource Gray400}"
-                   TextColor="White"
-                   BackgroundColor="{StaticResource InputBg}"
-                   Keyboard="Numeric"
-                   IsVisible="False"
-                   MaxLength="6"
-                   TextChanged="CardChanged"/>
+            <!-- Balance display -->
+            <Frame x:Name="BalanceFrame" BackgroundColor="{StaticResource ItemRowBg}" CornerRadius="10" Padding="14" BorderColor="{StaticResource Gray600}">
+                <Grid ColumnDefinitions="*,Auto">
+                    <Label x:Name="BalanceTitle" Text="Remaining" TextColor="{StaticResource Gray300}" FontSize="16" VerticalOptions="Center"/>
+                    <Label x:Name="BalanceLabel" Grid.Column="1" Text="LKR 0.00" FontSize="22" FontAttributes="Bold"
+                           TextColor="OrangeRed" HorizontalOptions="End"/>
+                </Grid>
+            </Frame>
 
-            <!-- Numeric Keypad -->
-            <Grid RowSpacing="10" ColumnSpacing="10">
+            <!-- Change display (visible when overpaid) -->
+            <Frame x:Name="ChangeFrame" BackgroundColor="#1B3A1B" CornerRadius="10" Padding="14" BorderColor="#4CAF50" IsVisible="False">
+                <Grid ColumnDefinitions="*,Auto">
+                    <Label Text="Change" TextColor="#81C784" FontSize="16" VerticalOptions="Center"/>
+                    <Label x:Name="ChangeLabel" Grid.Column="1" Text="LKR 0.00" FontSize="22" FontAttributes="Bold"
+                           TextColor="#4CAF50" HorizontalOptions="End"/>
+                </Grid>
+            </Frame>
+
+        </VerticalStackLayout>
+
+        <!-- RIGHT: Numpad + Confirm -->
+        <VerticalStackLayout Spacing="10" VerticalOptions="Center">
+
+            <!-- Active field indicator -->
+            <HorizontalStackLayout Spacing="8" HorizontalOptions="Center" Margin="0,0,0,8">
+                <Button x:Name="CashTabBtn" Text="Cash" BackgroundColor="{StaticResource CatBread}" TextColor="White"
+                        FontSize="14" HeightRequest="40" WidthRequest="100" CornerRadius="8" Clicked="CashTab_Clicked"/>
+                <Button x:Name="CardTabBtn" Text="Card" BackgroundColor="{StaticResource Gray600}" TextColor="White"
+                        FontSize="14" HeightRequest="40" WidthRequest="100" CornerRadius="8" Clicked="CardTab_Clicked"/>
+            </HorizontalStackLayout>
+
+            <!-- Numpad -->
+            <Grid RowSpacing="8" ColumnSpacing="8">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="60"/>
-                    <RowDefinition Height="60"/>
-                    <RowDefinition Height="60"/>
-                    <RowDefinition Height="60"/>
+                    <RowDefinition Height="64"/>
+                    <RowDefinition Height="64"/>
+                    <RowDefinition Height="64"/>
+                    <RowDefinition Height="64"/>
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -80,29 +102,36 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Row 1 -->
-                <Button Text="1" Grid.Row="0" Grid.Column="0" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
-                <Button Text="2" Grid.Row="0" Grid.Column="1" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
-                <Button Text="3" Grid.Row="0" Grid.Column="2" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
+                <Button Text="1" Grid.Row="0" Grid.Column="0" FontSize="22" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
+                <Button Text="2" Grid.Row="0" Grid.Column="1" FontSize="22" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
+                <Button Text="3" Grid.Row="0" Grid.Column="2" FontSize="22" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
 
-                <!-- Row 2 -->
-                <Button Text="4" Grid.Row="1" Grid.Column="0" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
-                <Button Text="5" Grid.Row="1" Grid.Column="1" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
-                <Button Text="6" Grid.Row="1" Grid.Column="2" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
+                <Button Text="4" Grid.Row="1" Grid.Column="0" FontSize="22" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
+                <Button Text="5" Grid.Row="1" Grid.Column="1" FontSize="22" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
+                <Button Text="6" Grid.Row="1" Grid.Column="2" FontSize="22" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
 
-                <!-- Row 3 -->
-                <Button Text="7" Grid.Row="2" Grid.Column="0" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
-                <Button Text="8" Grid.Row="2" Grid.Column="1" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
-                <Button Text="9" Grid.Row="2" Grid.Column="2" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
+                <Button Text="7" Grid.Row="2" Grid.Column="0" FontSize="22" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
+                <Button Text="8" Grid.Row="2" Grid.Column="1" FontSize="22" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
+                <Button Text="9" Grid.Row="2" Grid.Column="2" FontSize="22" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
 
-                <!-- Row 4 -->
-                <Button Text="Clear" Grid.Row="3" Grid.Column="0" BackgroundColor="{StaticResource ClearBtn}" TextColor="White" Clicked="ClearKeypad_Clicked"/>
-                <Button Text="0" Grid.Row="3" Grid.Column="1" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
-                <Button Text="Confirm" Grid.Row="3" Grid.Column="2" Clicked="Confirm_Clicked"
-                        BackgroundColor="{StaticResource PlaceOrderBtn}"
-                        TextColor="White"/>
+                <Button Text="Clear" Grid.Row="3" Grid.Column="0" FontSize="16" BackgroundColor="{StaticResource ClearBtn}" TextColor="White" Clicked="ClearKeypad_Clicked"/>
+                <Button Text="0" Grid.Row="3" Grid.Column="1" FontSize="22" BackgroundColor="{StaticResource NumpadBg}" TextColor="{StaticResource NumpadText}" Clicked="Keypad_Clicked"/>
+                <Button Text="&#x232B;" Grid.Row="3" Grid.Column="2" FontSize="22" BackgroundColor="{StaticResource ClearCartBtn}" TextColor="{StaticResource NumpadText}" Clicked="DeleteKeypad_Clicked"/>
             </Grid>
 
+            <!-- Confirm button — disabled until balance = 0 -->
+            <Button x:Name="ConfirmBtn"
+                    Text="Confirm Payment"
+                    BackgroundColor="{StaticResource PlaceOrderBtn}"
+                    TextColor="White"
+                    FontSize="20"
+                    FontAttributes="Bold"
+                    HeightRequest="60"
+                    CornerRadius="10"
+                    IsEnabled="False"
+                    Clicked="Confirm_Clicked"/>
+
         </VerticalStackLayout>
-    </ScrollView>
+
+    </Grid>
 </ContentPage>
