@@ -85,9 +85,8 @@ public partial class SalesHistoryPage : ContentPage
             if (change < 0) change = 0;
 
             // Header
-            AddCenter(receiptStack, "Royal Bakery", 18, true, Black);
-            AddCenter(receiptStack, "123 Main Street, Colombo", 11, false, Grey);
-            AddCenter(receiptStack, "Tel: +94 11 234 5678", 11, false, Grey);
+            AddCenter(receiptStack, "The Royal Bakery", 20, true, Black);
+            AddCenter(receiptStack, "202, Galle Road, Colombo-06", 11, false, Grey);
             AddLine(receiptStack, 2);
 
             // Invoice details
@@ -133,7 +132,8 @@ public partial class SalesHistoryPage : ContentPage
             AddCenter(receiptStack, "Thank you for your purchase!", 11, false, Grey);
             AddCenter(receiptStack, "Please come again", 11, false, Grey);
             AddLine(receiptStack, 1);
-            AddCenter(receiptStack, "Powered by Royal Bakery POS", 10, false, LightGrey);
+            AddCenter(receiptStack, "Powered by EzyCode", 10, false, LightGrey);
+            AddCenter(receiptStack, "www.ezycode.lk", 10, false, LightGrey);
 
             // Wrap in frame for paper look
             var paperFrame = new Frame
@@ -271,9 +271,8 @@ public partial class SalesHistoryPage : ContentPage
         string Center(string s) => s.PadLeft((W + s.Length) / 2).PadRight(W);
         string Row(string left, string right) => left + right.PadLeft(W - left.Length);
 
-        sb.AppendLine(Center("Royal Bakery"));
-        sb.AppendLine(Center("123 Main Street, Colombo"));
-        sb.AppendLine(Center("Tel: +94 11 234 5678"));
+        sb.AppendLine(Center("The Royal Bakery"));
+        sb.AppendLine(Center("202, Galle Road, Colombo-06"));
         sb.AppendLine(Line('='));
 
         sb.AppendLine(Row("Invoice #:", sale.InvoiceNumber));
@@ -302,7 +301,8 @@ public partial class SalesHistoryPage : ContentPage
         sb.AppendLine(Center("Thank you for your purchase!"));
         sb.AppendLine(Center("Please come again"));
         sb.AppendLine(Line('='));
-        sb.AppendLine(Center("Powered by Royal Bakery POS"));
+        sb.AppendLine(Center("Powered by EzyCode"));
+        sb.AppendLine(Center("www.ezycode.lk"));
 
         return sb.ToString();
     }

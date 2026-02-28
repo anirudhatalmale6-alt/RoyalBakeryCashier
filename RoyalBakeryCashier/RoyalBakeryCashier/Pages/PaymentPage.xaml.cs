@@ -256,9 +256,8 @@ public partial class PaymentPage : ContentPage
         string Center(string s) => s.PadLeft((W + s.Length) / 2).PadRight(W);
         string Row(string left, string right) => left + right.PadLeft(W - left.Length);
 
-        sb.AppendLine(Center("Royal Bakery"));
-        sb.AppendLine(Center("123 Main Street, Colombo"));
-        sb.AppendLine(Center("Tel: +94 11 234 5678"));
+        sb.AppendLine(Center("The Royal Bakery"));
+        sb.AppendLine(Center("202, Galle Road, Colombo-06"));
         sb.AppendLine(Line('='));
 
         sb.AppendLine(Row("Invoice #:", sale.InvoiceNumber));
@@ -286,7 +285,8 @@ public partial class PaymentPage : ContentPage
         sb.AppendLine(Center("Thank you for your purchase!"));
         sb.AppendLine(Center("Please come again"));
         sb.AppendLine(Line('='));
-        sb.AppendLine(Center("Powered by Royal Bakery POS"));
+        sb.AppendLine(Center("Powered by EzyCode"));
+        sb.AppendLine(Center("www.ezycode.lk"));
 
         return sb.ToString();
     }
