@@ -128,47 +128,66 @@
 
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
-                            <Frame Padding="8"
-                                   Margin="0,4"
+                            <Frame Padding="8,6"
+                                   Margin="0,3"
                                    BackgroundColor="{StaticResource ItemRowBg}"
                                    CornerRadius="8"
                                    BorderColor="{StaticResource Gray600}">
 
-                                <Grid ColumnDefinitions="*,Auto,Auto">
+                                <Grid ColumnDefinitions="*,Auto,Auto"
+                                      ColumnSpacing="6">
 
+                                    <!-- Item name — fixed area, left aligned -->
                                     <Label Text="{Binding Name}"
                                            TextColor="White"
-                                           VerticalOptions="Center"/>
+                                           FontSize="13"
+                                           VerticalOptions="Center"
+                                           LineBreakMode="TailTruncation"
+                                           MaxLines="1"/>
 
+                                    <!-- Qty controls — fixed width center block -->
                                     <HorizontalStackLayout Grid.Column="1"
-                                                           Spacing="4">
+                                                           Spacing="2"
+                                                           VerticalOptions="Center">
 
                                         <Button Text="-"
-                                                WidthRequest="30"
-                                                HeightRequest="30"
+                                                WidthRequest="28"
+                                                HeightRequest="28"
+                                                Padding="0"
+                                                FontSize="16"
                                                 BackgroundColor="{StaticResource CatSpecials}"
                                                 TextColor="White"
                                                 Clicked="DecreaseQuantity_Clicked"
                                                 CommandParameter="{Binding .}"/>
 
                                         <Label Text="{Binding Quantity}"
-                                               WidthRequest="25"
+                                               WidthRequest="28"
                                                TextColor="White"
-                                               HorizontalTextAlignment="Center"/>
+                                               FontSize="14"
+                                               FontAttributes="Bold"
+                                               HorizontalTextAlignment="Center"
+                                               VerticalOptions="Center"/>
 
                                         <Button Text="+"
-                                                WidthRequest="30"
-                                                HeightRequest="30"
+                                                WidthRequest="28"
+                                                HeightRequest="28"
+                                                Padding="0"
+                                                FontSize="16"
                                                 BackgroundColor="{StaticResource PlaceOrderBtn}"
                                                 TextColor="White"
                                                 Clicked="IncreaseQuantity_Clicked"
                                                 CommandParameter="{Binding .}"/>
                                     </HorizontalStackLayout>
 
+                                    <!-- Total — right aligned, fixed width -->
                                     <Label Grid.Column="2"
                                            Text="{Binding Total, StringFormat='LKR {0:F2}'}"
                                            TextColor="{StaticResource TotalHighlight}"
-                                           HorizontalOptions="End"/>
+                                           FontSize="13"
+                                           FontAttributes="Bold"
+                                           WidthRequest="90"
+                                           HorizontalTextAlignment="End"
+                                           VerticalOptions="Center"/>
                                 </Grid>
 
                             </Frame>
