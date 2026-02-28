@@ -274,7 +274,6 @@ public partial class PaymentPage : ContentPage
 
         sb.AppendLine(Line());
         sb.AppendLine(Row("Subtotal", $"LKR {sale.TotalAmount:N2}"));
-        sb.AppendLine(Row("Tax (0%)", "LKR 0.00"));
         sb.AppendLine(Line('='));
         sb.AppendLine(Row("TOTAL", $"LKR {sale.TotalAmount:N2}"));
         sb.AppendLine(Line());
@@ -293,45 +292,63 @@ public partial class PaymentPage : ContentPage
     }
 
     /// <summary>
-    /// Send receipt directly to the thermal printer.
-    /// Writes ESC/POS text to the printer port (USB/COM/Network).
-    /// On Partner POS terminals, the receipt printer is typically on a COM port or USB.
+    /// Send receipt directly to the Epson 3-inch thermal printer via USB.
+    /// Uses ESC/POS commands. Epson printers on Windows are accessible via
+    /// shared printer name or raw port. Also saves receipt locally as backup.
     /// </summary>
     private async Task PrintToThermal(string receiptText)
     {
+        // Always save receipt locally as backup
         try
         {
-            // Try writing to the default thermal printer via raw file output
-            // Partner POS terminals typically expose the printer as a file/port
-            // Common paths: "LPT1", "COM1", or a network path like "\\localhost\ReceiptPrinter"
+            string receiptDir = Path.Combine(FileSystem.AppDataDirectory, "receipts");
+            Directory.CreateDirectory(receiptDir);
+            string filePath = Path.Combine(receiptDir, $"receipt_{DateTime.Now:yyyyMMdd_HHmmss}.txt");
+            await File.WriteAllTextAsync(filePath, receiptText);
+        }
+        catch { /* backup save failed, not critical */ }
 
-            // Attempt 1: Write to known printer share or port
+        try
+        {
+            // Epson USB thermal printer — configurable path
+            // Default: try common Epson USB printer share name
+            // User can override via Preferences if the printer has a different name
             string printerPath = Preferences.Get("ThermalPrinterPath", "");
+
+            if (string.IsNullOrEmpty(printerPath))
+            {
+                // Auto-detect: On Windows, Epson USB printers typically appear as
+                // a shared printer. Try common names.
+                var candidates = new[] { "EPSON", "EPSON TM", "Receipt", "POS" };
+                foreach (var name in candidates)
+                {
+                    string testPath = $@"\\localhost\{name}";
+                    if (File.Exists(testPath) || Directory.Exists(testPath))
+                    {
+                        printerPath = testPath;
+                        break;
+                    }
+                }
+            }
 
             if (!string.IsNullOrEmpty(printerPath))
             {
-                // ESC/POS init + text + cut command
-                byte[] init = new byte[] { 0x1B, 0x40 }; // ESC @ (initialize)
-                byte[] cut = new byte[] { 0x1D, 0x56, 0x00 }; // GS V 0 (full cut)
-                byte[] textBytes = System.Text.Encoding.ASCII.GetBytes(receiptText + "\n\n\n");
+                // ESC/POS command sequence for Epson thermal
+                byte[] init = { 0x1B, 0x40 };           // ESC @ — initialize printer
+                byte[] alignCenter = { 0x1B, 0x61, 0x01 }; // ESC a 1 — center align (for header)
+                byte[] alignLeft = { 0x1B, 0x61, 0x00 };   // ESC a 0 — left align
+                byte[] feedCut = { 0x0A, 0x0A, 0x0A, 0x1D, 0x56, 0x41, 0x03 }; // Feed + GS V A 3 (partial cut)
+
+                byte[] textBytes = Encoding.GetEncoding("IBM437").GetBytes(receiptText);
 
                 using var fs = new FileStream(printerPath, FileMode.Open, FileAccess.Write);
                 await fs.WriteAsync(init);
+                await fs.WriteAsync(alignLeft);
                 await fs.WriteAsync(textBytes);
-                await fs.WriteAsync(cut);
+                await fs.WriteAsync(feedCut);
                 await fs.FlushAsync();
             }
-            else
-            {
-                // No printer configured yet — save receipt to file as backup
-                string receiptDir = Path.Combine(FileSystem.AppDataDirectory, "receipts");
-                Directory.CreateDirectory(receiptDir);
-                string filePath = Path.Combine(receiptDir, $"receipt_{DateTime.Now:yyyyMMdd_HHmmss}.txt");
-                await File.WriteAllTextAsync(filePath, receiptText);
-
-                // TODO: Configure printer path in settings
-                // For now, sale is saved and receipt is stored locally
-            }
+            // If no printer path found, receipt is still saved locally
         }
         catch
         {
