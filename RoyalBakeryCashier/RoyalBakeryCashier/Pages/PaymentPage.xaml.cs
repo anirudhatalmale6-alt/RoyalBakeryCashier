@@ -132,6 +132,15 @@ public partial class PaymentPage : ContentPage
 
     private async void Cancel_Clicked(object sender, EventArgs e)
     {
+        // Delete the pending order so the cashier can go back and modify the cart
+        try
+        {
+            _db.OrderItems.RemoveRange(_order.Items);
+            _db.Orders.Remove(_order);
+            await _db.SaveChangesAsync();
+        }
+        catch { /* best effort cleanup */ }
+
         await Navigation.PopModalAsync();
     }
 
