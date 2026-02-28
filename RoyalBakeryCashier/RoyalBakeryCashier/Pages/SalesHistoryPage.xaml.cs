@@ -56,14 +56,125 @@ public partial class SalesHistoryPage : ContentPage
     }
 
     /// <summary>
-    /// White receipt viewer — looks like actual thermal receipt paper
+    /// Styled receipt viewer — white paper with proper left-right aligned rows.
+    /// Matches the original receipt design (not plain text dump).
     /// </summary>
     public class ReceiptViewPage : ContentPage
     {
+        private static readonly Color Black = Colors.Black;
+        private static readonly Color Grey = Color.FromArgb("#555555");
+        private static readonly Color LightGrey = Color.FromArgb("#999999");
+
         public ReceiptViewPage(string invoiceNumber, string receiptText, Sale sale, SalesHistoryPage parent)
         {
             Title = invoiceNumber;
             BackgroundColor = Color.FromArgb("#1A1A1A");
+
+            // Build structured receipt
+            var receiptStack = new VerticalStackLayout
+            {
+                Spacing = 0,
+                Padding = new Thickness(16, 20),
+                BackgroundColor = Colors.White,
+                WidthRequest = 320,
+                HorizontalOptions = LayoutOptions.Center
+            };
+
+            decimal total = sale.TotalAmount;
+            decimal change = (sale.CashAmount + sale.CardAmount) - total;
+            if (change < 0) change = 0;
+
+            // Header
+            AddCenter(receiptStack, "Royal Bakery", 18, true, Black);
+            AddCenter(receiptStack, "123 Main Street, Colombo", 11, false, Grey);
+            AddCenter(receiptStack, "Tel: +94 11 234 5678", 11, false, Grey);
+            AddLine(receiptStack, 2);
+
+            // Invoice details
+            AddRow(receiptStack, "Invoice #:", sale.InvoiceNumber, 12, Black);
+            AddRow(receiptStack, "Date:", sale.DateTime.ToString("dd/MM/yyyy HH:mm"), 12, Black);
+            AddRow(receiptStack, "Cashier:", sale.CashierName ?? "Cashier", 12, Black);
+            AddLine(receiptStack, 1);
+
+            // Items
+            foreach (var item in sale.Items)
+            {
+                receiptStack.Children.Add(new Label
+                {
+                    Text = item.ItemName,
+                    FontAttributes = FontAttributes.Bold,
+                    FontSize = 12,
+                    TextColor = Black,
+                    Padding = new Thickness(0, 4, 0, 0)
+                });
+                AddRow(receiptStack, $"  {item.Quantity} x LKR {item.PricePerItem:N2}",
+                    $"LKR {item.TotalPrice:N2}", 11, Grey);
+            }
+
+            AddLine(receiptStack, 1);
+
+            // Subtotal
+            AddRow(receiptStack, "Subtotal", $"LKR {total:N2}", 12, Black);
+            AddLine(receiptStack, 2);
+
+            // TOTAL
+            AddRow(receiptStack, "TOTAL", $"LKR {total:N2}", 14, Black, true);
+            AddLine(receiptStack, 1);
+
+            // Payment breakdown
+            if (sale.CashAmount > 0)
+                AddRow(receiptStack, "Cash", $"LKR {sale.CashAmount:N2}", 12, Black);
+            if (sale.CardAmount > 0)
+                AddRow(receiptStack, "Card", $"LKR {sale.CardAmount:N2}", 12, Black);
+            AddRow(receiptStack, "Change", $"LKR {change:N2}", 12, Black, true);
+            AddLine(receiptStack, 1);
+
+            // Footer
+            AddCenter(receiptStack, "Thank you for your purchase!", 11, false, Grey);
+            AddCenter(receiptStack, "Please come again", 11, false, Grey);
+            AddLine(receiptStack, 1);
+            AddCenter(receiptStack, "Powered by Royal Bakery POS", 10, false, LightGrey);
+
+            // Wrap in frame for paper look
+            var paperFrame = new Frame
+            {
+                BackgroundColor = Colors.White,
+                CornerRadius = 4,
+                Padding = 0,
+                HasShadow = true,
+                BorderColor = Color.FromArgb("#CCCCCC"),
+                WidthRequest = 320,
+                HorizontalOptions = LayoutOptions.Center,
+                Content = receiptStack
+            };
+
+            var reprintBtn = new Button
+            {
+                Text = "Reprint",
+                BackgroundColor = Color.FromArgb("#9C27B0"),
+                TextColor = Colors.White,
+                FontSize = 16,
+                FontAttributes = FontAttributes.Bold,
+                HeightRequest = 46,
+                CornerRadius = 10,
+                WidthRequest = 320,
+                HorizontalOptions = LayoutOptions.Center
+            };
+
+            var backBtn = new Button
+            {
+                Text = "Back",
+                BackgroundColor = Color.FromArgb("#757575"),
+                TextColor = Colors.White,
+                FontSize = 15,
+                HeightRequest = 42,
+                CornerRadius = 10,
+                WidthRequest = 320,
+                HorizontalOptions = LayoutOptions.Center
+            };
+
+            reprintBtn.Clicked += async (s, e) => await parent.ReprintSale(sale);
+            backBtn.Clicked += async (s, e) => await Navigation.PopAsync();
 
             Content = new ScrollView
             {
@@ -72,71 +183,55 @@ public partial class SalesHistoryPage : ContentPage
                     Padding = new Thickness(20),
                     Spacing = 12,
                     HorizontalOptions = LayoutOptions.Center,
-                    Children =
-                    {
-                        // White receipt paper
-                        new Frame
-                        {
-                            BackgroundColor = Colors.White,
-                            CornerRadius = 4,
-                            Padding = new Thickness(16, 20),
-                            WidthRequest = 320,
-                            HasShadow = true,
-                            BorderColor = Color.FromArgb("#CCCCCC"),
-                            Content = new Label
-                            {
-                                Text = receiptText,
-                                FontFamily = "Courier New",
-                                FontSize = 11,
-                                TextColor = Colors.Black,
-                                LineHeight = 1.4,
-                            }
-                        },
-
-                        // Reprint button
-                        new Button
-                        {
-                            Text = "Reprint",
-                            BackgroundColor = Color.FromArgb("#9C27B0"),
-                            TextColor = Colors.White,
-                            FontSize = 16,
-                            FontAttributes = FontAttributes.Bold,
-                            HeightRequest = 46,
-                            CornerRadius = 10,
-                            WidthRequest = 320,
-                            HorizontalOptions = LayoutOptions.Center
-                        },
-
-                        // Back button
-                        new Button
-                        {
-                            Text = "Back",
-                            BackgroundColor = Color.FromArgb("#757575"),
-                            TextColor = Colors.White,
-                            FontSize = 15,
-                            HeightRequest = 42,
-                            CornerRadius = 10,
-                            WidthRequest = 320,
-                            HorizontalOptions = LayoutOptions.Center
-                        }
-                    }
+                    Children = { paperFrame, reprintBtn, backBtn }
                 }
             };
+        }
 
-            // Wire up buttons
-            var stack = (VerticalStackLayout)((ScrollView)Content).Content;
-            var reprintBtn = (Button)stack.Children[1];
-            var backBtn = (Button)stack.Children[2];
-
-            reprintBtn.Clicked += async (s, e) =>
+        private static void AddCenter(VerticalStackLayout stack, string text, double size, bool bold, Color color)
+        {
+            stack.Children.Add(new Label
             {
-                await parent.ReprintSale(sale);
-            };
+                Text = text,
+                FontSize = size,
+                FontAttributes = bold ? FontAttributes.Bold : FontAttributes.None,
+                TextColor = color,
+                HorizontalTextAlignment = TextAlignment.Center,
+                Padding = new Thickness(0, 1)
+            });
+        }
 
-            backBtn.Clicked += async (s, e) =>
+        private static void AddRow(VerticalStackLayout stack, string left, string right,
+            double size = 12, Color? color = null, bool bold = false)
+        {
+            color ??= Colors.Black;
+            var grid = new Grid
             {
-                await Navigation.PopAsync();
+                ColumnDefinitions = { new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto) },
+                Padding = new Thickness(0, 1)
             };
+            grid.Add(new Label
+            {
+                Text = left, FontSize = size, TextColor = color,
+                FontAttributes = bold ? FontAttributes.Bold : FontAttributes.None
+            }, 0);
+            grid.Add(new Label
+            {
+                Text = right, FontSize = size, TextColor = color,
+                FontAttributes = bold ? FontAttributes.Bold : FontAttributes.None,
+                HorizontalTextAlignment = TextAlignment.End
+            }, 1);
+            stack.Children.Add(grid);
+        }
+
+        private static void AddLine(VerticalStackLayout stack, int thickness)
+        {
+            stack.Children.Add(new BoxView
+            {
+                HeightRequest = thickness,
+                Color = Color.FromArgb(thickness > 1 ? "#333333" : "#CCCCCC"),
+                Margin = new Thickness(0, 6)
+            });
         }
     }
 
