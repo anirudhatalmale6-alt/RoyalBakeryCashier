@@ -129,6 +129,7 @@ public partial class SalesHistoryPage : ContentPage
             AddLine(receiptStack, 1);
 
             // Footer
+            AddCenter(receiptStack, "** REPRINT **", 12, true, Black);
             AddCenter(receiptStack, "Thank you for your purchase!", 11, false, Grey);
             AddCenter(receiptStack, "Please come again", 11, false, Grey);
             AddLine(receiptStack, 1);
