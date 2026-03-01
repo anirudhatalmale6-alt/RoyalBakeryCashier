@@ -318,7 +318,8 @@ public partial class SalesmanPage : ContentPage
         {
             var menuItem = _dbContext.MenuItems.Find(item.MenuItemId);
             string itemName = menuItem?.Name ?? "Unknown";
-            sb.AppendLine(Row($"{itemName} x{item.Quantity}", $"LKR {item.TotalPrice:N2}"));
+            sb.AppendLine(itemName);
+            sb.AppendLine(Row($" {item.Quantity} x {item.PricePerItem:N2}", $"{item.TotalPrice:N2}"));
         }
 
         sb.AppendLine(Line());
