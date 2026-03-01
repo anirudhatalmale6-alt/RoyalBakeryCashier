@@ -110,13 +110,113 @@ namespace RoyalBakeryCashier.Data
 
         /// <summary>
         /// Apply schema patches for columns/tables added after initial EnsureCreated.
-        /// Safe to call multiple times — each patch checks IF NOT EXISTS before altering.
+        /// Safe to call multiple times — each patch checks IF NOT/EXISTS before altering.
         /// </summary>
         public void ApplyMigrations()
         {
             var patches = new[]
             {
-                // v1: Add IsQuick column to MenuItems
+                // ===== Create missing tables =====
+
+                // Orders table
+                @"IF OBJECT_ID('Orders', 'U') IS NULL
+                  CREATE TABLE Orders (
+                      Id INT IDENTITY(1,1) PRIMARY KEY,
+                      DateTime DATETIME2 NOT NULL,
+                      Status INT NOT NULL DEFAULT 1,
+                      TotalAmount DECIMAL(18,2) NOT NULL DEFAULT 0
+                  );",
+
+                // OrderItems table
+                @"IF OBJECT_ID('OrderItems', 'U') IS NULL
+                  CREATE TABLE OrderItems (
+                      Id INT IDENTITY(1,1) PRIMARY KEY,
+                      OrderId INT NOT NULL,
+                      MenuItemId INT NOT NULL,
+                      Quantity INT NOT NULL,
+                      PricePerItem DECIMAL(18,2) NOT NULL DEFAULT 0,
+                      TotalPrice DECIMAL(18,2) NOT NULL DEFAULT 0,
+                      CONSTRAINT FK_OrderItems_Orders FOREIGN KEY (OrderId) REFERENCES Orders(Id) ON DELETE CASCADE,
+                      CONSTRAINT FK_OrderItems_MenuItems FOREIGN KEY (MenuItemId) REFERENCES MenuItems(Id) ON DELETE NO ACTION
+                  );",
+
+                // OrderPayments table
+                @"IF OBJECT_ID('OrderPayments', 'U') IS NULL
+                  CREATE TABLE OrderPayments (
+                      Id INT IDENTITY(1,1) PRIMARY KEY,
+                      OrderId INT NOT NULL,
+                      PaymentType INT NOT NULL DEFAULT 0,
+                      TenderAmount DECIMAL(18,2) NOT NULL DEFAULT 0,
+                      DateTime DATETIME2 NOT NULL
+                  );",
+
+                // Sales table
+                @"IF OBJECT_ID('Sales', 'U') IS NULL
+                  CREATE TABLE Sales (
+                      Id INT IDENTITY(1,1) PRIMARY KEY,
+                      DateTime DATETIME2 NOT NULL,
+                      TotalAmount DECIMAL(18,2) NOT NULL DEFAULT 0,
+                      CashAmount DECIMAL(18,2) NOT NULL DEFAULT 0,
+                      CardAmount DECIMAL(18,2) NOT NULL DEFAULT 0,
+                      ChangeGiven DECIMAL(18,2) NOT NULL DEFAULT 0,
+                      CashierName NVARCHAR(MAX) NULL,
+                      InvoiceNumber NVARCHAR(MAX) NOT NULL DEFAULT ''
+                  );",
+
+                // SaleItems table
+                @"IF OBJECT_ID('SaleItems', 'U') IS NULL
+                  CREATE TABLE SaleItems (
+                      Id INT IDENTITY(1,1) PRIMARY KEY,
+                      SaleId INT NOT NULL,
+                      MenuItemId INT NOT NULL,
+                      ItemName NVARCHAR(MAX) NOT NULL DEFAULT '',
+                      Quantity INT NOT NULL,
+                      PricePerItem DECIMAL(18,2) NOT NULL DEFAULT 0,
+                      TotalPrice DECIMAL(18,2) NOT NULL DEFAULT 0,
+                      CONSTRAINT FK_SaleItems_Sales FOREIGN KEY (SaleId) REFERENCES Sales(Id) ON DELETE CASCADE,
+                      CONSTRAINT FK_SaleItems_MenuItems FOREIGN KEY (MenuItemId) REFERENCES MenuItems(Id) ON DELETE NO ACTION
+                  );",
+
+                // SalesOrders table
+                @"IF OBJECT_ID('SalesOrders', 'U') IS NULL
+                  CREATE TABLE SalesOrders (
+                      Id INT IDENTITY(1,1) PRIMARY KEY,
+                      SalesOrderNumber NVARCHAR(20) NOT NULL,
+                      CreatedAt DATETIME2 NOT NULL,
+                      TotalAmount DECIMAL(18,2) NOT NULL DEFAULT 0,
+                      Status INT NOT NULL DEFAULT 0,
+                      TerminalName NVARCHAR(MAX) NULL,
+                      CustomerName NVARCHAR(MAX) NULL
+                  );",
+
+                // SalesOrderItems table
+                @"IF OBJECT_ID('SalesOrderItems', 'U') IS NULL
+                  CREATE TABLE SalesOrderItems (
+                      Id INT IDENTITY(1,1) PRIMARY KEY,
+                      SalesOrderId INT NOT NULL,
+                      MenuItemId INT NOT NULL,
+                      Quantity INT NOT NULL,
+                      PricePerItem DECIMAL(18,2) NOT NULL DEFAULT 0,
+                      TotalPrice DECIMAL(18,2) NOT NULL DEFAULT 0,
+                      CONSTRAINT FK_SalesOrderItems_SalesOrders FOREIGN KEY (SalesOrderId) REFERENCES SalesOrders(Id) ON DELETE CASCADE,
+                      CONSTRAINT FK_SalesOrderItems_MenuItems FOREIGN KEY (MenuItemId) REFERENCES MenuItems(Id) ON DELETE NO ACTION
+                  );",
+
+                // Clearances table
+                @"IF OBJECT_ID('Clearances', 'U') IS NULL
+                  CREATE TABLE Clearances (
+                      Id INT IDENTITY(1,1) PRIMARY KEY,
+                      DateTime DATETIME2 NOT NULL,
+                      MenuItemId INT NOT NULL,
+                      Quantity INT NOT NULL,
+                      Reason NVARCHAR(MAX) NOT NULL DEFAULT '',
+                      Note NVARCHAR(MAX) NULL,
+                      CONSTRAINT FK_Clearances_MenuItems FOREIGN KEY (MenuItemId) REFERENCES MenuItems(Id) ON DELETE NO ACTION
+                  );",
+
+                // ===== Add missing columns =====
+
+                // IsQuick column on MenuItems
                 @"IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('MenuItems') AND name = 'IsQuick')
                   ALTER TABLE MenuItems ADD IsQuick BIT NOT NULL DEFAULT 0;",
             };
