@@ -4,7 +4,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     BackgroundColor="{StaticResource PageBg}"
-    Title="POS Window">
+    Title="The Royal Bakery">
 
     <Grid RowDefinitions="Auto,*"
           ColumnDefinitions="2.8*,1.2*"
@@ -13,7 +13,7 @@
 
         <!-- ================= TOP BAR ================= -->
         <Grid Grid.ColumnSpan="2" Padding="0,0,0,10">
-            <Label Text="Cashier POS"
+            <Label Text="The Royal Bakery"
                    FontSize="22"
                    FontAttributes="Bold"
                    TextColor="White"
