@@ -3,6 +3,12 @@ using RoyalBakeryAPI.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Support running as a Windows Service (auto-start with Windows)
+builder.Host.UseWindowsService(options =>
+{
+    options.ServiceName = "RoyalBakeryAPI";
+});
+
 // Add services
 builder.Services.AddControllers();
 builder.Services.AddDbContext<BakeryDbContext>(options =>
