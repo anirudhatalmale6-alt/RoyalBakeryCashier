@@ -183,6 +183,7 @@ public partial class PaymentPage : ContentPage
                 CardAmount = card,
                 ChangeGiven = change,
                 InvoiceNumber = $"INV-{_order.Id:D5}",
+                CashierName = string.IsNullOrEmpty(App.LoggedInUserName) ? "Cashier" : App.LoggedInUserName,
                 Items = _order.Items.Select(i => new SaleItem
                 {
                     MenuItemId = i.MenuItemId,

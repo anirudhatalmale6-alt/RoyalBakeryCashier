@@ -10,12 +10,22 @@ namespace RoyalBakeryCashier
         /// Terminal mode: "Cashier", "Salesman", or empty (launcher).
         /// Set via compile constant or terminal.config file next to the EXE.
         /// </summary>
-        public static string TerminalMode { get; private set; } = "";
+        public static string TerminalMode { get; set; } = "";
 
         /// <summary>
         /// For salesman terminals: the display name (e.g., "Salesman 1", "Salesman 2").
         /// </summary>
-        public static string TerminalName { get; private set; } = "Salesman";
+        public static string TerminalName { get; set; } = "Salesman";
+
+        /// <summary>
+        /// The logged-in user's display name (set after login).
+        /// </summary>
+        public static string LoggedInUserName { get; set; } = "";
+
+        /// <summary>
+        /// The logged-in user's ID (set after login).
+        /// </summary>
+        public static int LoggedInUserId { get; set; }
 
         public App()
         {
@@ -37,25 +47,14 @@ namespace RoyalBakeryCashier
             // Determine mode from config file next to the EXE
             LoadTerminalConfig();
 
-            ContentPage startPage;
-
 #if CASHIER_MODE
             TerminalMode = "Cashier";
-            startPage = new Pages.CashierPage();
 #elif SALESMAN_MODE
             TerminalMode = "Salesman";
-            startPage = new Pages.SalesmanPage();
-#else
-            // Fallback: check config file or show launcher
-            if (TerminalMode == "Cashier")
-                startPage = new Pages.CashierPage();
-            else if (TerminalMode == "Salesman")
-                startPage = new Pages.SalesmanPage();
-            else
-                startPage = new Pages.LauncherPage();
 #endif
 
-            MainPage = new NavigationPage(startPage)
+            // All modes start with login page
+            MainPage = new NavigationPage(new Pages.LoginPage())
             {
                 BarBackgroundColor = Color.FromArgb("#1A1A1A"),
                 BarTextColor = Colors.White

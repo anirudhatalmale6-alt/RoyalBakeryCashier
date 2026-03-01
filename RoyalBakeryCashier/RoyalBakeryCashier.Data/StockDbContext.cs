@@ -25,6 +25,7 @@ namespace RoyalBakeryCashier.Data
         public DbSet<SaleItem> SaleItems { get; set; }
         public DbSet<SalesOrder> SalesOrders { get; set; }
         public DbSet<SalesOrderItem> SalesOrderItems { get; set; }
+        public DbSet<User> Users { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -256,12 +257,35 @@ namespace RoyalBakeryCashier.Data
                 // Step 3: Add missing columns to existing tables
                 @"IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('MenuItems') AND name = 'IsQuick')
                   ALTER TABLE MenuItems ADD IsQuick BIT NOT NULL DEFAULT 0;",
+
+                // Users table for login
+                @"IF OBJECT_ID('Users', 'U') IS NULL
+                  CREATE TABLE Users (
+                      Id INT IDENTITY(1,1) PRIMARY KEY,
+                      Username NVARCHAR(50) NOT NULL,
+                      PasswordHash NVARCHAR(200) NOT NULL,
+                      DisplayName NVARCHAR(100) NOT NULL,
+                      Role NVARCHAR(30) NOT NULL DEFAULT 'Cashier',
+                      IsActive BIT NOT NULL DEFAULT 1,
+                      CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE()
+                  );",
             };
 
             foreach (var sql in creates)
             {
                 try { Database.ExecuteSqlRaw(sql); } catch { }
             }
+
+            // Seed default admin user if no users exist
+            try
+            {
+                Database.ExecuteSqlRaw(@"
+                    IF NOT EXISTS (SELECT 1 FROM Users)
+                    INSERT INTO Users (Username, PasswordHash, DisplayName, Role, IsActive, CreatedAt)
+                    VALUES ('admin', 'admin123', 'Administrator', 'Admin', 1, GETDATE());
+                ");
+            }
+            catch { }
         }
     }
 }

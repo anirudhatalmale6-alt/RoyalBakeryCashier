@@ -14,6 +14,7 @@ public class BakeryDbContext : DbContext
     public DbSet<GRNAdjustmentRequest> GRNAdjustmentRequests { get; set; }
     public DbSet<GRNAdjustmentRequestItem> GRNAdjustmentRequestItems { get; set; }
     public DbSet<Clearance> Clearances { get; set; }
+    public DbSet<User> Users { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
