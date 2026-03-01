@@ -85,7 +85,7 @@ namespace RoyalBakeryCashier.Pages
             foreach (var cat in categories)
                 allButtons.Add((cat.Name, cat.Id));
 
-            int cols = 5;
+            int cols = 6;
             int rows = (int)Math.Ceiling(allButtons.Count / (double)cols);
             for (int r = 0; r < rows; r++)
                 CategoryGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
@@ -110,9 +110,10 @@ namespace RoyalBakeryCashier.Pages
                 Text = name,
                 BackgroundColor = bgColor,
                 TextColor = Colors.White,
-                CornerRadius = 8,
+                CornerRadius = 0,
                 FontSize = 14,
                 HeightRequest = 50,
+                Margin = 0,
             };
             btn.Clicked += (s, e) => FilterItems(categoryId);
             return btn;

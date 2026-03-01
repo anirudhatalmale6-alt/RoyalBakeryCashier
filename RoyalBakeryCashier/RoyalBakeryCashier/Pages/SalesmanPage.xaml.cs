@@ -76,7 +76,7 @@ public partial class SalesmanPage : ContentPage
         foreach (var cat in categories)
             allButtons.Add((cat.Name, cat.Id));
 
-        int cols = 5;
+        int cols = 6;
         int rows = (int)Math.Ceiling(allButtons.Count / (double)cols);
         for (int r = 0; r < rows; r++)
             CategoryGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
@@ -89,9 +89,10 @@ public partial class SalesmanPage : ContentPage
                 Text = name,
                 BackgroundColor = i == 0 ? Color.FromArgb("#E91E63") : _categoryColors[i % _categoryColors.Length],
                 TextColor = Colors.White,
-                CornerRadius = 8,
+                CornerRadius = 0,
                 FontSize = 14,
                 HeightRequest = 50,
+                Margin = 0,
             };
             btn.Clicked += (s, e) => FilterItems(catId);
             Grid.SetRow(btn, i / cols);
