@@ -4,10 +4,14 @@ namespace RoyalBakeryCashier
 {
     public partial class App : Application
     {
-        public App(Pages.CashierPage startPage)
+        public App()
         {
             InitializeComponent();
-            MainPage = new NavigationPage(startPage);
+            MainPage = new NavigationPage(new Pages.LauncherPage())
+            {
+                BarBackgroundColor = Color.FromArgb("#1A1A1A"),
+                BarTextColor = Colors.White
+            };
         }
     }
 }

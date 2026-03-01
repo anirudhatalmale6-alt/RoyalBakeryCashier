@@ -21,8 +21,20 @@ public partial class SalesmanPage : ContentPage
         _dbContext = new StockDbContext();
         _cartItems = new ObservableCollection<CartItem>();
         CartCollectionView.ItemsSource = _cartItems;
-        LoadCategories();
-        LoadItems();
+
+        try
+        {
+            _dbContext.Database.EnsureCreated();
+            LoadCategories();
+            LoadItems();
+        }
+        catch (Exception ex)
+        {
+            MainThread.BeginInvokeOnMainThread(async () =>
+                await DisplayAlert("Database Error",
+                    $"Could not connect to SQL Server.\n\nMake sure SQL Server Express is running and the database exists.\n\nError: {ex.Message}",
+                    "OK"));
+        }
     }
 
     // Category colors (same as cashier)
@@ -52,7 +64,8 @@ public partial class SalesmanPage : ContentPage
         foreach (var cat in categories)
             allButtons.Add((cat.Name, cat.Id));
 
-        int rows = (int)Math.Ceiling(allButtons.Count / 3.0);
+        int cols = 4;
+        int rows = (int)Math.Ceiling(allButtons.Count / (double)cols);
         for (int r = 0; r < rows; r++)
             CategoryGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
 
@@ -65,12 +78,12 @@ public partial class SalesmanPage : ContentPage
                 BackgroundColor = i == 0 ? Color.FromArgb("#E91E63") : _categoryColors[i % _categoryColors.Length],
                 TextColor = Colors.White,
                 CornerRadius = 8,
-                FontSize = 16,
-                HeightRequest = 70,
+                FontSize = 14,
+                HeightRequest = 50,
             };
             btn.Clicked += (s, e) => FilterItems(catId);
-            Grid.SetRow(btn, i / 3);
-            Grid.SetColumn(btn, i % 3);
+            Grid.SetRow(btn, i / cols);
+            Grid.SetColumn(btn, i % cols);
             CategoryGrid.Children.Add(btn);
         }
     }

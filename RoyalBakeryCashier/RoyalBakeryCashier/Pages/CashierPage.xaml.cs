@@ -23,8 +23,19 @@ namespace RoyalBakeryCashier.Pages
             _cartItems = new ObservableCollection<CartItem>();
             CartCollectionView.ItemsSource = _cartItems;
 
-            LoadCategories();
-            LoadItems();
+            try
+            {
+                _dbContext.Database.EnsureCreated();
+                LoadCategories();
+                LoadItems();
+            }
+            catch (Exception ex)
+            {
+                MainThread.BeginInvokeOnMainThread(async () =>
+                    await DisplayAlert("Database Error",
+                        $"Could not connect to SQL Server.\n\nMake sure SQL Server Express is running and the database exists.\n\nError: {ex.Message}",
+                        "OK"));
+            }
         }
 
         // Category color palette matching reference design
@@ -55,7 +66,8 @@ namespace RoyalBakeryCashier.Pages
             foreach (var cat in categories)
                 allButtons.Add((cat.Name, cat.Id));
 
-            int rows = (int)Math.Ceiling(allButtons.Count / 3.0);
+            int cols = 4;
+            int rows = (int)Math.Ceiling(allButtons.Count / (double)cols);
             for (int r = 0; r < rows; r++)
                 CategoryGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
 
@@ -66,8 +78,8 @@ namespace RoyalBakeryCashier.Pages
                 if (catId == QUICK_CATEGORY_ID)
                     colorIndex = 0; // use a distinct color for Quicks
                 var btn = CreateCategoryButton(name, catId, i == 0 ? Color.FromArgb("#E91E63") : _categoryColors[colorIndex]);
-                Grid.SetRow(btn, i / 3);
-                Grid.SetColumn(btn, i % 3);
+                Grid.SetRow(btn, i / cols);
+                Grid.SetColumn(btn, i % cols);
                 CategoryGrid.Children.Add(btn);
             }
         }
@@ -80,8 +92,8 @@ namespace RoyalBakeryCashier.Pages
                 BackgroundColor = bgColor,
                 TextColor = Colors.White,
                 CornerRadius = 8,
-                FontSize = 16,
-                HeightRequest = 70,
+                FontSize = 14,
+                HeightRequest = 50,
             };
             btn.Clicked += (s, e) => FilterItems(categoryId);
             return btn;
