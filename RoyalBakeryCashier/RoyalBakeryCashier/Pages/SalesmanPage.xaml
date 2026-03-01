@@ -56,7 +56,7 @@
                     <VerticalStackLayout Spacing="8">
                         <Label Text="Categories" FontAttributes="Bold" FontSize="16" TextColor="White"/>
                         <Grid x:Name="CategoryGrid"
-                              ColumnDefinitions="*,*,*,*"
+                              ColumnDefinitions="*,*,*,*,*"
                               ColumnSpacing="6"
                               RowSpacing="6"/>
                     </VerticalStackLayout>

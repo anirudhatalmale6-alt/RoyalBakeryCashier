@@ -66,7 +66,7 @@ namespace RoyalBakeryCashier.Pages
             foreach (var cat in categories)
                 allButtons.Add((cat.Name, cat.Id));
 
-            int cols = 4;
+            int cols = 5;
             int rows = (int)Math.Ceiling(allButtons.Count / (double)cols);
             for (int r = 0; r < rows; r++)
                 CategoryGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
