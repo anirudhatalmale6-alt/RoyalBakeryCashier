@@ -19,6 +19,39 @@
                    TextColor="White"
                    VerticalOptions="Center"/>
             <HorizontalStackLayout HorizontalOptions="End" Spacing="8">
+                <!-- Sales Order Search -->
+                <Frame BackgroundColor="{StaticResource InputBg}"
+                       Padding="0" CornerRadius="8"
+                       BorderColor="{StaticResource Gray600}"
+                       HeightRequest="36">
+                    <HorizontalStackLayout Spacing="4" Padding="8,0">
+                        <Entry x:Name="SalesOrderEntry"
+                               Placeholder="Sales Order ID..."
+                               PlaceholderColor="{StaticResource Gray400}"
+                               TextColor="White"
+                               FontSize="13"
+                               WidthRequest="150"
+                               HeightRequest="36"
+                               BackgroundColor="Transparent"
+                               Completed="SalesOrderEntry_Completed"/>
+                        <Button Text="Load"
+                                FontSize="12"
+                                HeightRequest="30"
+                                Padding="10,0"
+                                CornerRadius="6"
+                                BackgroundColor="{StaticResource CatDrinks}"
+                                TextColor="White"
+                                Clicked="LoadSalesOrder_Clicked"/>
+                    </HorizontalStackLayout>
+                </Frame>
+                <Button Text="GRN"
+                        FontSize="13"
+                        HeightRequest="36"
+                        Padding="12,0"
+                        CornerRadius="8"
+                        BackgroundColor="{StaticResource CatCakes}"
+                        TextColor="White"
+                        Clicked="GRN_Clicked"/>
                 <Button Text="Sales History"
                         FontSize="13"
                         HeightRequest="36"

@@ -83,6 +83,15 @@ namespace RoyalBakeryCashier.Pages
             await Shell.Current.GoToAsync("ClearStock");
         }
 
+        private async void GRN_Clicked(object sender, EventArgs e)
+        {
+            await Navigation.PushModalAsync(new NavigationPage(new GRNPage())
+            {
+                BarBackgroundColor = Color.FromArgb("#1A1A1A"),
+                BarTextColor = Colors.White
+            });
+        }
+
         private async void SalesHistory_Clicked(object sender, EventArgs e)
         {
             await Navigation.PushModalAsync(new NavigationPage(new SalesHistoryPage())
@@ -90,6 +99,103 @@ namespace RoyalBakeryCashier.Pages
                 BarBackgroundColor = Color.FromArgb("#1A1A1A"),
                 BarTextColor = Colors.White
             });
+        }
+
+        // ===== SALES ORDER LOADING =====
+        private void SalesOrderEntry_Completed(object sender, EventArgs e)
+        {
+            LoadSalesOrderFromSearch();
+        }
+
+        private void LoadSalesOrder_Clicked(object sender, EventArgs e)
+        {
+            LoadSalesOrderFromSearch();
+        }
+
+        private async void LoadSalesOrderFromSearch()
+        {
+            var searchText = (SalesOrderEntry.Text ?? "").Trim();
+            if (string.IsNullOrEmpty(searchText))
+            {
+                await DisplayAlert("Search", "Please enter a Sales Order ID.", "OK");
+                return;
+            }
+
+            // Search by exact SalesOrderNumber or by Id
+            var salesOrder = _dbContext.SalesOrders
+                .Include(so => so.Items)
+                .ThenInclude(i => i.MenuItem)
+                .FirstOrDefault(so => so.SalesOrderNumber == searchText
+                    || so.Id.ToString() == searchText);
+
+            if (salesOrder == null)
+            {
+                await DisplayAlert("Not Found", $"Sales Order \"{searchText}\" not found.", "OK");
+                return;
+            }
+
+            if (salesOrder.Status == 1)
+            {
+                await DisplayAlert("Already Paid", $"Sales Order {salesOrder.SalesOrderNumber} has already been paid.", "OK");
+                return;
+            }
+
+            if (salesOrder.Status == 2)
+            {
+                await DisplayAlert("Cancelled", $"Sales Order {salesOrder.SalesOrderNumber} was cancelled.", "OK");
+                return;
+            }
+
+            // Clear current cart and load sales order items
+            _cartItems.Clear();
+            LoadItems(); // refresh stock
+
+            foreach (var item in salesOrder.Items)
+            {
+                var menuItem = _allItems.FirstOrDefault(x => x.MenuItemId == item.MenuItemId);
+                if (menuItem == null) continue;
+
+                if (item.Quantity > menuItem.AvailableStock)
+                {
+                    await DisplayAlert("Stock Warning",
+                        $"{menuItem.Name}: ordered {item.Quantity} but only {menuItem.AvailableStock} in stock. Adding available amount.",
+                        "OK");
+                    int available = menuItem.AvailableStock;
+                    if (available <= 0) continue;
+
+                    _cartItems.Add(new CartItem
+                    {
+                        MenuItemId = item.MenuItemId,
+                        Name = menuItem.Name,
+                        Quantity = available,
+                        Price = item.PricePerItem,
+                        Total = available * item.PricePerItem
+                    });
+                    menuItem.AvailableStock = 0;
+                }
+                else
+                {
+                    _cartItems.Add(new CartItem
+                    {
+                        MenuItemId = item.MenuItemId,
+                        Name = menuItem.Name,
+                        Quantity = item.Quantity,
+                        Price = item.PricePerItem,
+                        Total = item.TotalPrice
+                    });
+                    menuItem.AvailableStock -= item.Quantity;
+                }
+            }
+
+            SalesOrderEntry.Text = string.Empty;
+            UpdateTotal();
+            RefreshCart();
+            RefreshItemsList();
+
+            string info = salesOrder.CustomerName != null
+                ? $"Loaded {salesOrder.SalesOrderNumber} ({salesOrder.CustomerName}) — {_cartItems.Count} items"
+                : $"Loaded {salesOrder.SalesOrderNumber} — {_cartItems.Count} items";
+            await DisplayAlert("Sales Order Loaded", info, "OK");
         }
 
         private void LoadItems()

@@ -23,6 +23,8 @@ namespace RoyalBakeryCashier.Data
         public DbSet<Clearance> Clearances { get; set; }
         public DbSet<Sale> Sales { get; set; }
         public DbSet<SaleItem> SaleItems { get; set; }
+        public DbSet<SalesOrder> SalesOrders { get; set; }
+        public DbSet<SalesOrderItem> SalesOrderItems { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -84,6 +86,19 @@ namespace RoyalBakeryCashier.Data
                 .HasOne(si => si.MenuItem)
                 .WithMany()
                 .HasForeignKey(si => si.MenuItemId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // ===== SalesOrder → SalesOrderItem =====
+            modelBuilder.Entity<SalesOrderItem>()
+                .HasOne(soi => soi.SalesOrder)
+                .WithMany(so => so.Items)
+                .HasForeignKey(soi => soi.SalesOrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<SalesOrderItem>()
+                .HasOne(soi => soi.MenuItem)
+                .WithMany()
+                .HasForeignKey(soi => soi.MenuItemId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // ===== Decimal / int precision =====
