@@ -124,6 +124,11 @@
                                                    TextColor="{StaticResource TotalHighlight}"
                                                    HorizontalTextAlignment="Center"/>
 
+                                            <Label Text="{Binding AvailableStock, StringFormat='Qty: {0}'}"
+                                                   FontSize="11"
+                                                   TextColor="{StaticResource Gray300}"
+                                                   HorizontalTextAlignment="Center"/>
+
                                         </VerticalStackLayout>
 
                                     </Frame>
