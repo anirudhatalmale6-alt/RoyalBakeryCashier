@@ -22,13 +22,13 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
-            return BadRequest(new { error = "Username and password are required." });
+            return BadRequest(new { message = "Username and password are required." });
 
         var user = await _db.Users
             .FirstOrDefaultAsync(u => u.Username == request.Username && u.IsActive);
 
         if (user == null || user.PasswordHash != request.Password)
-            return Unauthorized(new { error = "Invalid username or password." });
+            return Unauthorized(new { message = "Invalid username or password." });
 
         return Ok(new LoginResponse
         {

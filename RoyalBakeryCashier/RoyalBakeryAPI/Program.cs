@@ -19,6 +19,69 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Auto-create tables and seed default admin user
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<BakeryDbContext>();
+    try
+    {
+        db.Database.EnsureCreated();
+
+        // Seed default admin user if no users exist
+        if (!db.Users.Any())
+        {
+            db.Users.Add(new User
+            {
+                Username = "admin",
+                PasswordHash = "admin123",
+                DisplayName = "Admin",
+                Role = "Admin",
+                IsActive = true,
+                CreatedAt = DateTime.Now
+            });
+            db.SaveChanges();
+            Console.WriteLine("Default admin user created (admin/admin123)");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"DB init warning: {ex.Message}");
+        // Try creating just the Users table if it doesn't exist
+        try
+        {
+            db.Database.ExecuteSqlRaw(@"
+                IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Users' AND xtype='U')
+                CREATE TABLE Users (
+                    Id INT IDENTITY(1,1) PRIMARY KEY,
+                    Username NVARCHAR(50) NOT NULL,
+                    PasswordHash NVARCHAR(200) NOT NULL,
+                    DisplayName NVARCHAR(100) NOT NULL,
+                    Role NVARCHAR(30) NOT NULL DEFAULT 'Cashier',
+                    IsActive BIT NOT NULL DEFAULT 1,
+                    CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE()
+                )");
+            if (!db.Users.Any())
+            {
+                db.Users.Add(new User
+                {
+                    Username = "admin",
+                    PasswordHash = "admin123",
+                    DisplayName = "Admin",
+                    Role = "Admin",
+                    IsActive = true,
+                    CreatedAt = DateTime.Now
+                });
+                db.SaveChanges();
+                Console.WriteLine("Users table created + default admin user seeded");
+            }
+        }
+        catch (Exception ex2)
+        {
+            Console.WriteLine($"Users table creation failed: {ex2.Message}");
+        }
+    }
+}
+
 app.UseCors();
 app.MapControllers();
 
