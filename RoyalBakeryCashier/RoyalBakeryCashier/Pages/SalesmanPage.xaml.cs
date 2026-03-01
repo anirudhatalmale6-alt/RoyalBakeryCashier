@@ -307,34 +307,25 @@ public partial class SalesmanPage : ContentPage
         sb.AppendLine(Center("202, Galle Road, Colombo-06"));
         sb.AppendLine(Line('='));
         sb.AppendLine(Center("*** SALES ORDER ***"));
-        sb.AppendLine(Line('='));
-
+        sb.AppendLine(Line());
         sb.AppendLine(Row("Order #:", order.SalesOrderNumber));
         sb.AppendLine(Row("Date:", order.CreatedAt.ToString("dd/MM/yyyy HH:mm")));
         if (!string.IsNullOrEmpty(order.CustomerName))
             sb.AppendLine(Row("Customer:", order.CustomerName));
-        sb.AppendLine(Row("Terminal:", order.TerminalName ?? "Salesman"));
         sb.AppendLine(Line());
 
         foreach (var item in order.Items)
         {
             var menuItem = _dbContext.MenuItems.Find(item.MenuItemId);
             string itemName = menuItem?.Name ?? "Unknown";
-            sb.AppendLine(itemName);
-            sb.AppendLine(Row($"  {item.Quantity} x LKR {item.PricePerItem:N2}", $"LKR {item.TotalPrice:N2}"));
+            sb.AppendLine(Row($"{itemName} x{item.Quantity}", $"LKR {item.TotalPrice:N2}"));
         }
 
         sb.AppendLine(Line());
         sb.AppendLine(Row("TOTAL", $"LKR {order.TotalAmount:N2}"));
         sb.AppendLine(Line('='));
-
-        // QR code placeholder — the actual QR will be generated as ESC/POS bitmap
-        // For text printers, print the order number prominently
-        sb.AppendLine();
         sb.AppendLine(Center($"[ {order.SalesOrderNumber} ]"));
-        sb.AppendLine();
-        sb.AppendLine(Center("Please present this slip"));
-        sb.AppendLine(Center("at the cashier for payment"));
+        sb.AppendLine(Center("Present at cashier for payment"));
         sb.AppendLine(Line());
         sb.AppendLine(Center("Powered by EzyCode"));
         sb.AppendLine(Center("www.ezycode.lk"));
