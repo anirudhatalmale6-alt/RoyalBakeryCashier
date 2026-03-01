@@ -28,25 +28,33 @@ namespace RoyalBakeryCashier.Pages
         protected override async void OnAppearing()
         {
             base.OnAppearing();
-            if (_loaded) return;
-            _loaded = true;
 
-            try
+            if (!_loaded)
             {
-                await Task.Run(() =>
+                _loaded = true;
+                try
                 {
-                    _dbContext.Database.EnsureCreated();
-                    _dbContext.ApplyMigrations();
-                });
-                LoadCategories();
-                LoadItems();
+                    await Task.Run(() =>
+                    {
+                        _dbContext.Database.EnsureCreated();
+                        _dbContext.ApplyMigrations();
+                    });
+                    LoadCategories();
+                }
+                catch (Exception ex)
+                {
+                    await DisplayAlert("Database Error",
+                        $"Could not connect to SQL Server.\n\nMake sure SQL Server is running and the database exists.\n\nError: {ex.Message}",
+                        "OK");
+                    return;
+                }
             }
-            catch (Exception ex)
-            {
-                await DisplayAlert("Database Error",
-                    $"Could not connect to SQL Server.\n\nMake sure SQL Server is running and the database exists.\n\nError: {ex.Message}",
-                    "OK");
-            }
+
+            // Always reload items and clear cart when page reappears (e.g., after payment modal closes)
+            _cartItems.Clear();
+            LoadItems();
+            UpdateTotal();
+            RefreshCart();
         }
 
         // Category color palette matching reference design
