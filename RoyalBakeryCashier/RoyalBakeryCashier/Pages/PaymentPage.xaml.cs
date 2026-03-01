@@ -8,34 +8,48 @@ namespace RoyalBakeryCashier.Pages;
 public partial class PaymentPage : ContentPage
 {
     private readonly StockDbContext _db;
-    private readonly Order _order;
-    private readonly decimal _total;
+    private Order _order;
+    private decimal _total;
+    private readonly int _orderId;
 
     private Entry _activeEntry;
+    private bool _loaded = false;
 
     public PaymentPage(int orderId)
     {
         InitializeComponent();
         _db = new StockDbContext();
-
-        _order = _db.Orders
-            .Include(o => o.Items)
-            .ThenInclude(i => i.MenuItem)
-            .First(o => o.Id == orderId);
-
-        _total = _order.TotalAmount;
-
-        TotalLabel.Text = $"LKR {_total:N2}";
-
-        // Default: full amount in cash
-        CashEntry.Text = ((int)_total).ToString();
-        CardEntry.Text = "0";
+        _orderId = orderId;
 
         CashEntry.Focused += (s, e) => SetActiveEntry(CashEntry);
         CardEntry.Focused += (s, e) => SetActiveEntry(CardEntry);
-
         _activeEntry = CashEntry;
-        UpdateBalance();
+    }
+
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+        if (_loaded) return;
+        _loaded = true;
+
+        try
+        {
+            _order = await Task.Run(() => _db.Orders
+                .Include(o => o.Items)
+                .ThenInclude(i => i.MenuItem)
+                .First(o => o.Id == _orderId));
+
+            _total = _order.TotalAmount;
+            TotalLabel.Text = $"LKR {_total:N2}";
+            CashEntry.Text = ((int)_total).ToString();
+            CardEntry.Text = "0";
+            UpdateBalance();
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"Could not load order.\n\n{ex.Message}", "OK");
+            await Navigation.PopModalAsync();
+        }
     }
 
     private void SetActiveEntry(Entry entry)

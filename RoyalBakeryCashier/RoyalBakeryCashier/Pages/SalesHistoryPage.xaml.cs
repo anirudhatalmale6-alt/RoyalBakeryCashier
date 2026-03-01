@@ -9,12 +9,28 @@ public partial class SalesHistoryPage : ContentPage
 {
     private readonly StockDbContext _db;
     private List<SaleViewModel> _sales;
+    private bool _loaded = false;
 
     public SalesHistoryPage()
     {
         InitializeComponent();
         _db = new StockDbContext();
-        LoadSales();
+    }
+
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+        if (_loaded) return;
+        _loaded = true;
+
+        try
+        {
+            LoadSales();
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"Could not load sales history.\n\n{ex.Message}", "OK");
+        }
     }
 
     private void LoadSales()

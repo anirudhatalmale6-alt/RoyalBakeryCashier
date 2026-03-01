@@ -345,29 +345,36 @@ namespace RoyalBakeryCashier.Pages
                 return;
             }
 
-            var order = new Order
+            try
             {
-                DateTime = DateTime.Now,
-                Status = 0,
-                TotalAmount = _cartItems.Sum(c => c.Total),
-                Items = _cartItems.Select(c => new OrderItem
+                var order = new Order
                 {
-                    MenuItemId = c.MenuItemId,
-                    Quantity = c.Quantity,
-                    PricePerItem = c.Price,
-                    TotalPrice = c.Total,
-                    MenuItem = null
-                }).ToList()
-            };
+                    DateTime = DateTime.Now,
+                    Status = 0,
+                    TotalAmount = _cartItems.Sum(c => c.Total),
+                    Items = _cartItems.Select(c => new OrderItem
+                    {
+                        MenuItemId = c.MenuItemId,
+                        Quantity = c.Quantity,
+                        PricePerItem = c.Price,
+                        TotalPrice = c.Total,
+                        MenuItem = null
+                    }).ToList()
+                };
 
-            _dbContext.Orders.Add(order);
-            await _dbContext.SaveChangesAsync();
+                _dbContext.Orders.Add(order);
+                await _dbContext.SaveChangesAsync();
 
-            await Navigation.PushModalAsync(new NavigationPage(new PaymentPage(order.Id))
+                await Navigation.PushModalAsync(new NavigationPage(new PaymentPage(order.Id))
+                {
+                    BarBackgroundColor = Color.FromArgb("#1A1A1A"),
+                    BarTextColor = Colors.White
+                });
+            }
+            catch (Exception ex)
             {
-                BarBackgroundColor = Color.FromArgb("#1A1A1A"),
-                BarTextColor = Colors.White
-            });
+                await DisplayAlert("Error", $"Could not place order.\n\n{ex.InnerException?.Message ?? ex.Message}", "OK");
+            }
         }
 
         private async void CartItemName_Tapped(object sender, TappedEventArgs e)
