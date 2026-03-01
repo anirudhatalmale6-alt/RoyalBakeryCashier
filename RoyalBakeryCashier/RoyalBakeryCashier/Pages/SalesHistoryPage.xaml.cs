@@ -90,9 +90,9 @@ public partial class SalesHistoryPage : ContentPage
             var receiptStack = new VerticalStackLayout
             {
                 Spacing = 0,
-                Padding = new Thickness(16, 20),
+                Padding = new Thickness(20, 20),
                 BackgroundColor = Colors.White,
-                WidthRequest = 320,
+                WidthRequest = 420,
                 HorizontalOptions = LayoutOptions.Center
             };
 
@@ -103,6 +103,8 @@ public partial class SalesHistoryPage : ContentPage
             // Header
             AddCenter(receiptStack, "The Royal Bakery", 20, true, Black);
             AddCenter(receiptStack, "202, Galle Road, Colombo-06", 11, false, Grey);
+            AddCenter(receiptStack, "0112 500 991 / 0114 341 642", 11, false, Grey);
+            AddCenter(receiptStack, "www.theroyalbakery.com", 11, false, Grey);
             AddLine(receiptStack, 2);
 
             // Invoice details
@@ -160,7 +162,7 @@ public partial class SalesHistoryPage : ContentPage
                 Padding = 0,
                 HasShadow = true,
                 BorderColor = Color.FromArgb("#CCCCCC"),
-                WidthRequest = 320,
+                WidthRequest = 420,
                 HorizontalOptions = LayoutOptions.Center,
                 Content = receiptStack
             };
@@ -174,7 +176,7 @@ public partial class SalesHistoryPage : ContentPage
                 FontAttributes = FontAttributes.Bold,
                 HeightRequest = 46,
                 CornerRadius = 10,
-                WidthRequest = 320,
+                WidthRequest = 420,
                 HorizontalOptions = LayoutOptions.Center
             };
 
@@ -186,7 +188,7 @@ public partial class SalesHistoryPage : ContentPage
                 FontSize = 15,
                 HeightRequest = 42,
                 CornerRadius = 10,
-                WidthRequest = 320,
+                WidthRequest = 420,
                 HorizontalOptions = LayoutOptions.Center
             };
 
