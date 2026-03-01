@@ -38,13 +38,20 @@ namespace RoyalBakeryCashier.Pages
             Color.FromArgb("#F44336"), // Specials - red
         };
 
+        private const int QUICK_CATEGORY_ID = -1; // special ID for Quicks
+
         private void LoadCategories()
         {
             var categories = _dbContext.MenuCategories.ToList();
             CategoryGrid.Children.Clear();
             CategoryGrid.RowDefinitions.Clear();
 
-            var allButtons = new List<(string Name, int? CatId)> { ("All", null) };
+            // Quicks first, then All, then real categories
+            var allButtons = new List<(string Name, int? CatId)>
+            {
+                ("Quicks", QUICK_CATEGORY_ID),
+                ("All", null)
+            };
             foreach (var cat in categories)
                 allButtons.Add((cat.Name, cat.Id));
 
@@ -56,7 +63,9 @@ namespace RoyalBakeryCashier.Pages
             {
                 var (name, catId) = allButtons[i];
                 var colorIndex = i % _categoryColors.Length;
-                var btn = CreateCategoryButton(name, catId, _categoryColors[colorIndex]);
+                if (catId == QUICK_CATEGORY_ID)
+                    colorIndex = 0; // use a distinct color for Quicks
+                var btn = CreateCategoryButton(name, catId, i == 0 ? Color.FromArgb("#E91E63") : _categoryColors[colorIndex]);
                 Grid.SetRow(btn, i / 3);
                 Grid.SetColumn(btn, i % 3);
                 CategoryGrid.Children.Add(btn);
@@ -210,7 +219,9 @@ namespace RoyalBakeryCashier.Pages
         private void FilterItems(int? categoryId)
         {
             var query = _dbContext.Stocks.Include(s => s.MenuItem).AsQueryable();
-            if (categoryId != null)
+            if (categoryId == QUICK_CATEGORY_ID)
+                query = query.Where(s => s.MenuItem.IsQuick);
+            else if (categoryId != null)
                 query = query.Where(s => s.MenuItem.MenuCategoryId == categoryId);
 
             var items = query

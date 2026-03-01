@@ -36,13 +36,19 @@ public partial class SalesmanPage : ContentPage
         Color.FromArgb("#F44336"),
     };
 
+    private const int QUICK_CATEGORY_ID = -1; // special ID for Quicks
+
     private void LoadCategories()
     {
         var categories = _dbContext.MenuCategories.ToList();
         CategoryGrid.Children.Clear();
         CategoryGrid.RowDefinitions.Clear();
 
-        var allButtons = new List<(string Name, int? CatId)> { ("All", null) };
+        var allButtons = new List<(string Name, int? CatId)>
+        {
+            ("Quicks", QUICK_CATEGORY_ID),
+            ("All", null)
+        };
         foreach (var cat in categories)
             allButtons.Add((cat.Name, cat.Id));
 
@@ -56,7 +62,7 @@ public partial class SalesmanPage : ContentPage
             var btn = new Button
             {
                 Text = name,
-                BackgroundColor = _categoryColors[i % _categoryColors.Length],
+                BackgroundColor = i == 0 ? Color.FromArgb("#E91E63") : _categoryColors[i % _categoryColors.Length],
                 TextColor = Colors.White,
                 CornerRadius = 8,
                 FontSize = 16,
@@ -90,7 +96,9 @@ public partial class SalesmanPage : ContentPage
     private void FilterItems(int? categoryId)
     {
         var query = _dbContext.Stocks.Include(s => s.MenuItem).AsQueryable();
-        if (categoryId != null)
+        if (categoryId == QUICK_CATEGORY_ID)
+            query = query.Where(s => s.MenuItem.IsQuick);
+        else if (categoryId != null)
             query = query.Where(s => s.MenuItem.MenuCategoryId == categoryId);
 
         var items = query
