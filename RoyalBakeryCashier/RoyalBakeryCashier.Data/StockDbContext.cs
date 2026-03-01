@@ -107,5 +107,24 @@ namespace RoyalBakeryCashier.Data
             modelBuilder.Entity<OrderItem>().Property(p => p.TotalPrice).HasColumnType("decimal(18,2)");
             modelBuilder.Entity<Stock>().Property(s => s.Quantity).HasColumnType("int"); // integer quantity
         }
+
+        /// <summary>
+        /// Apply schema patches for columns/tables added after initial EnsureCreated.
+        /// Safe to call multiple times — each patch checks IF NOT EXISTS before altering.
+        /// </summary>
+        public void ApplyMigrations()
+        {
+            var patches = new[]
+            {
+                // v1: Add IsQuick column to MenuItems
+                @"IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('MenuItems') AND name = 'IsQuick')
+                  ALTER TABLE MenuItems ADD IsQuick BIT NOT NULL DEFAULT 0;",
+            };
+
+            foreach (var sql in patches)
+            {
+                try { Database.ExecuteSqlRaw(sql); } catch { }
+            }
+        }
     }
 }

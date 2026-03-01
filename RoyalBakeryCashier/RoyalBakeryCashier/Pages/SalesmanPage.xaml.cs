@@ -33,7 +33,11 @@ public partial class SalesmanPage : ContentPage
 
         try
         {
-            await Task.Run(() => _dbContext.Database.EnsureCreated());
+            await Task.Run(() =>
+            {
+                _dbContext.Database.EnsureCreated();
+                _dbContext.ApplyMigrations();
+            });
             LoadCategories();
             LoadItems();
         }

@@ -33,7 +33,11 @@ namespace RoyalBakeryCashier.Pages
 
             try
             {
-                await Task.Run(() => _dbContext.Database.EnsureCreated());
+                await Task.Run(() =>
+                {
+                    _dbContext.Database.EnsureCreated();
+                    _dbContext.ApplyMigrations();
+                });
                 LoadCategories();
                 LoadItems();
             }
