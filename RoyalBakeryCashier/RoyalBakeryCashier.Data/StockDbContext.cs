@@ -110,15 +110,61 @@ namespace RoyalBakeryCashier.Data
 
         /// <summary>
         /// Apply schema patches for columns/tables added after initial EnsureCreated.
-        /// Safe to call multiple times — each patch checks IF NOT/EXISTS before altering.
+        /// Drops and recreates tables that have wrong schema (only if empty).
+        /// Safe to call multiple times.
         /// </summary>
         public void ApplyMigrations()
         {
-            var patches = new[]
+            // Step 1: Drop incomplete tables that have wrong schema (only safe for tables with no real data yet).
+            // Uses a check: if the table exists but is missing a key column, drop it so we can recreate.
+            var dropAndRecreate = new[]
             {
-                // ===== Create missing tables =====
+                // Sales: check for InvoiceNumber column
+                @"IF OBJECT_ID('SaleItems', 'U') IS NOT NULL
+                  AND NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('SaleItems') AND name = 'ItemName')
+                  DROP TABLE SaleItems;",
 
-                // Orders table
+                @"IF OBJECT_ID('Sales', 'U') IS NOT NULL
+                  AND NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('Sales') AND name = 'InvoiceNumber')
+                  DROP TABLE Sales;",
+
+                // Orders: check for TotalAmount column
+                @"IF OBJECT_ID('OrderItems', 'U') IS NOT NULL
+                  AND NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('OrderItems') AND name = 'PricePerItem')
+                  DROP TABLE OrderItems;",
+
+                @"IF OBJECT_ID('Orders', 'U') IS NOT NULL
+                  AND NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('Orders') AND name = 'TotalAmount')
+                  DROP TABLE Orders;",
+
+                // SalesOrders: check for SalesOrderNumber column
+                @"IF OBJECT_ID('SalesOrderItems', 'U') IS NOT NULL
+                  AND NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('SalesOrderItems') AND name = 'PricePerItem')
+                  DROP TABLE SalesOrderItems;",
+
+                @"IF OBJECT_ID('SalesOrders', 'U') IS NOT NULL
+                  AND NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('SalesOrders') AND name = 'SalesOrderNumber')
+                  DROP TABLE SalesOrders;",
+
+                // OrderPayments: check for TenderAmount
+                @"IF OBJECT_ID('OrderPayments', 'U') IS NOT NULL
+                  AND NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('OrderPayments') AND name = 'TenderAmount')
+                  DROP TABLE OrderPayments;",
+
+                // Clearances: check for Reason
+                @"IF OBJECT_ID('Clearances', 'U') IS NOT NULL
+                  AND NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('Clearances') AND name = 'Reason')
+                  DROP TABLE Clearances;",
+            };
+
+            foreach (var sql in dropAndRecreate)
+            {
+                try { Database.ExecuteSqlRaw(sql); } catch { }
+            }
+
+            // Step 2: Create tables that don't exist
+            var creates = new[]
+            {
                 @"IF OBJECT_ID('Orders', 'U') IS NULL
                   CREATE TABLE Orders (
                       Id INT IDENTITY(1,1) PRIMARY KEY,
@@ -127,7 +173,6 @@ namespace RoyalBakeryCashier.Data
                       TotalAmount DECIMAL(18,2) NOT NULL DEFAULT 0
                   );",
 
-                // OrderItems table
                 @"IF OBJECT_ID('OrderItems', 'U') IS NULL
                   CREATE TABLE OrderItems (
                       Id INT IDENTITY(1,1) PRIMARY KEY,
@@ -140,7 +185,6 @@ namespace RoyalBakeryCashier.Data
                       CONSTRAINT FK_OrderItems_MenuItems FOREIGN KEY (MenuItemId) REFERENCES MenuItems(Id) ON DELETE NO ACTION
                   );",
 
-                // OrderPayments table
                 @"IF OBJECT_ID('OrderPayments', 'U') IS NULL
                   CREATE TABLE OrderPayments (
                       Id INT IDENTITY(1,1) PRIMARY KEY,
@@ -150,7 +194,6 @@ namespace RoyalBakeryCashier.Data
                       DateTime DATETIME2 NOT NULL
                   );",
 
-                // Sales table
                 @"IF OBJECT_ID('Sales', 'U') IS NULL
                   CREATE TABLE Sales (
                       Id INT IDENTITY(1,1) PRIMARY KEY,
@@ -163,7 +206,6 @@ namespace RoyalBakeryCashier.Data
                       InvoiceNumber NVARCHAR(MAX) NOT NULL DEFAULT ''
                   );",
 
-                // SaleItems table
                 @"IF OBJECT_ID('SaleItems', 'U') IS NULL
                   CREATE TABLE SaleItems (
                       Id INT IDENTITY(1,1) PRIMARY KEY,
@@ -177,7 +219,6 @@ namespace RoyalBakeryCashier.Data
                       CONSTRAINT FK_SaleItems_MenuItems FOREIGN KEY (MenuItemId) REFERENCES MenuItems(Id) ON DELETE NO ACTION
                   );",
 
-                // SalesOrders table
                 @"IF OBJECT_ID('SalesOrders', 'U') IS NULL
                   CREATE TABLE SalesOrders (
                       Id INT IDENTITY(1,1) PRIMARY KEY,
@@ -189,7 +230,6 @@ namespace RoyalBakeryCashier.Data
                       CustomerName NVARCHAR(MAX) NULL
                   );",
 
-                // SalesOrderItems table
                 @"IF OBJECT_ID('SalesOrderItems', 'U') IS NULL
                   CREATE TABLE SalesOrderItems (
                       Id INT IDENTITY(1,1) PRIMARY KEY,
@@ -202,7 +242,6 @@ namespace RoyalBakeryCashier.Data
                       CONSTRAINT FK_SalesOrderItems_MenuItems FOREIGN KEY (MenuItemId) REFERENCES MenuItems(Id) ON DELETE NO ACTION
                   );",
 
-                // Clearances table
                 @"IF OBJECT_ID('Clearances', 'U') IS NULL
                   CREATE TABLE Clearances (
                       Id INT IDENTITY(1,1) PRIMARY KEY,
@@ -214,14 +253,12 @@ namespace RoyalBakeryCashier.Data
                       CONSTRAINT FK_Clearances_MenuItems FOREIGN KEY (MenuItemId) REFERENCES MenuItems(Id) ON DELETE NO ACTION
                   );",
 
-                // ===== Add missing columns =====
-
-                // IsQuick column on MenuItems
+                // Step 3: Add missing columns to existing tables
                 @"IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('MenuItems') AND name = 'IsQuick')
                   ALTER TABLE MenuItems ADD IsQuick BIT NOT NULL DEFAULT 0;",
             };
 
-            foreach (var sql in patches)
+            foreach (var sql in creates)
             {
                 try { Database.ExecuteSqlRaw(sql); } catch { }
             }
