@@ -5,6 +5,7 @@ using RoyalBakeryCashier.Data;
 using RoyalBakeryCashier.Data.Entities;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Text;
 
 namespace RoyalBakeryCashier.Pages
 {
@@ -55,6 +56,9 @@ namespace RoyalBakeryCashier.Pages
             LoadItems();
             UpdateTotal();
             RefreshCart();
+
+            // Keep focus on the sales order entry for scanner input
+            SalesOrderEntry.Focus();
         }
 
         // Category color palette matching reference design
@@ -236,6 +240,7 @@ namespace RoyalBakeryCashier.Pages
                 ? $"Loaded {salesOrder.SalesOrderNumber} ({salesOrder.CustomerName}) — {_cartItems.Count} items"
                 : $"Loaded {salesOrder.SalesOrderNumber} — {_cartItems.Count} items";
             await DisplayAlert("Sales Order Loaded", info, "OK");
+            SalesOrderEntry.Focus();
         }
 
         private void LoadItems()
@@ -293,6 +298,7 @@ namespace RoyalBakeryCashier.Pages
                 AddToCart(selected, qty);
                 QuantityEntry.Text = string.Empty;
                 ItemsCollectionView.SelectedItem = null;
+                SalesOrderEntry.Focus();
             }
         }
 
@@ -356,6 +362,7 @@ namespace RoyalBakeryCashier.Pages
             LoadItems();
             UpdateTotal();
             RefreshCart();
+            SalesOrderEntry.Focus();
         }
 
         private async void PlaceOrder_Clicked(object sender, EventArgs e)

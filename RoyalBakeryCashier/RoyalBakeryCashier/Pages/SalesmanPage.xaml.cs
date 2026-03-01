@@ -304,9 +304,9 @@ public partial class SalesmanPage : ContentPage
         _dbContext.SalesOrders.Add(salesOrder);
         await _dbContext.SaveChangesAsync();
 
-        // Print sales order slip
+        // Print sales order slip with QR code
         string slipText = BuildOrderSlip(salesOrder);
-        await PrintToThermal(slipText);
+        await PrintToThermal(slipText, salesOrder.SalesOrderNumber);
 
         await DisplayAlert("Order Created",
             $"{orderNumber} created — {_cartItems.Count} items, LKR {salesOrder.TotalAmount:N2}\n\nGive the printed slip to the customer for payment at the cashier.",
@@ -362,7 +362,7 @@ public partial class SalesmanPage : ContentPage
         return sb.ToString();
     }
 
-    private async Task PrintToThermal(string text)
+    private async Task PrintToThermal(string text, string qrData = null)
     {
         // Save locally as backup
         try
@@ -381,6 +381,7 @@ public partial class SalesmanPage : ContentPage
             {
                 byte[] init = { 0x1B, 0x40 };
                 byte[] alignLeft = { 0x1B, 0x61, 0x00 };
+                byte[] alignCenter = { 0x1B, 0x61, 0x01 };
                 byte[] feedCut = { 0x0A, 0x0A, 0x0A, 0x1D, 0x56, 0x41, 0x03 };
                 byte[] textBytes = Encoding.GetEncoding("IBM437").GetBytes(text);
 
@@ -388,11 +389,56 @@ public partial class SalesmanPage : ContentPage
                 await fs.WriteAsync(init);
                 await fs.WriteAsync(alignLeft);
                 await fs.WriteAsync(textBytes);
+
+                // Print QR code using native ESC/POS commands (Epson TM series)
+                if (!string.IsNullOrEmpty(qrData))
+                {
+                    await fs.WriteAsync(alignCenter);
+                    byte[] qrBytes = BuildEscPosQR(qrData);
+                    await fs.WriteAsync(qrBytes);
+                    await fs.WriteAsync(alignLeft);
+                    // Label below QR
+                    byte[] label = Encoding.GetEncoding("IBM437").GetBytes("\n  Scan at cashier for payment\n");
+                    await fs.WriteAsync(label);
+                }
+
                 await fs.WriteAsync(feedCut);
                 await fs.FlushAsync();
             }
         }
         catch { }
+    }
+
+    /// <summary>
+    /// Build native ESC/POS QR code command bytes for Epson thermal printers.
+    /// Uses GS ( k commands supported by TM-T82, TM-T88, etc.
+    /// </summary>
+    private static byte[] BuildEscPosQR(string data)
+    {
+        byte[] dataBytes = Encoding.ASCII.GetBytes(data);
+        int storeLen = dataBytes.Length + 3; // pL pH 31 50 30 + data
+        byte pL = (byte)(storeLen & 0xFF);
+        byte pH = (byte)((storeLen >> 8) & 0xFF);
+
+        using var ms = new MemoryStream();
+
+        // 1. Select model (Model 2)
+        ms.Write(new byte[] { 0x1D, 0x28, 0x6B, 0x04, 0x00, 0x31, 0x41, 0x32, 0x00 });
+
+        // 2. Set module size (6 = medium, good for scanning)
+        ms.Write(new byte[] { 0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x43, 0x06 });
+
+        // 3. Set error correction level (L = 48, M = 49, Q = 50, H = 51)
+        ms.Write(new byte[] { 0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x45, 0x31 });
+
+        // 4. Store QR data
+        ms.Write(new byte[] { 0x1D, 0x28, 0x6B, pL, pH, 0x31, 0x50, 0x30 });
+        ms.Write(dataBytes);
+
+        // 5. Print QR code
+        ms.Write(new byte[] { 0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x51, 0x30 });
+
+        return ms.ToArray();
     }
 
     private async void OrderHistory_Clicked(object sender, EventArgs e)
