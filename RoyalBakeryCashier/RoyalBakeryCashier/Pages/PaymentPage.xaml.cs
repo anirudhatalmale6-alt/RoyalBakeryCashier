@@ -203,9 +203,8 @@ public partial class PaymentPage : ContentPage
             await _db.SaveChangesAsync();
             await tx.CommitAsync();
 
-            // 4. Build receipt text and send directly to thermal printer
-            string receiptText = BuildReceiptText(sale, cash, card, change);
-            await PrintToThermal(receiptText);
+            // 4. Print receipt directly to thermal printer
+            await PrintToThermal(sale, cash, card, change);
 
             // Close payment popup, go back to cashier
             await Navigation.PopModalAsync();
@@ -258,117 +257,94 @@ public partial class PaymentPage : ContentPage
     }
 
     /// <summary>
-    /// Build plain-text receipt for 3-inch (80mm) thermal printer.
-    /// 42 characters per line at standard font.
+    /// Send receipt to 3-inch (80mm) Epson thermal printer using ESC/POS commands.
+    /// Uses printer-native center alignment for headers/footers (no space padding).
     /// </summary>
-    private string BuildReceiptText(Sale sale, decimal cash, decimal card, decimal change)
+    private async Task PrintToThermal(Sale sale, decimal cash, decimal card, decimal change)
     {
-        const int W = 42; // chars per line for 80mm thermal
-        var sb = new StringBuilder();
-
-        string Line(char c = '-') => new string(c, W);
-        string Center(string s) => s.PadLeft((W + s.Length) / 2).PadRight(W);
+        const int W = 48;
+        string Separator(char c = '-') => new string(c, W);
         string Row(string left, string right) => left + right.PadLeft(W - left.Length);
 
-        sb.AppendLine(Center("The Royal Bakery"));
-        sb.AppendLine(Center("202, Galle Road, Colombo-06"));
-        sb.AppendLine(Center("0112 500 991 / 0114 341 642"));
-        sb.AppendLine(Center("www.theroyalbakery.com"));
-        sb.AppendLine(Line('='));
-
-        sb.AppendLine(Row("Invoice #:", sale.InvoiceNumber));
-        sb.AppendLine(Row("Date:", sale.DateTime.ToString("dd/MM/yyyy HH:mm")));
-        sb.AppendLine(Row("Cashier:", sale.CashierName ?? "Cashier"));
-        sb.AppendLine(Line());
-
-        foreach (var item in sale.Items)
-        {
-            sb.AppendLine(item.ItemName);
-            sb.AppendLine(Row($"  {item.Quantity} x LKR {item.PricePerItem:N2}", $"LKR {item.TotalPrice:N2}"));
-        }
-
-        sb.AppendLine(Line());
-        sb.AppendLine(Row("Subtotal", $"LKR {sale.TotalAmount:N2}"));
-        sb.AppendLine(Line('='));
-        sb.AppendLine(Row("TOTAL", $"LKR {sale.TotalAmount:N2}"));
-        sb.AppendLine(Line());
-
-        if (cash > 0) sb.AppendLine(Row("Cash", $"LKR {cash:N2}"));
-        if (card > 0) sb.AppendLine(Row("Card", $"LKR {card:N2}"));
-        sb.AppendLine(Row("Change", $"LKR {change:N2}"));
-        sb.AppendLine(Line());
-
-        sb.AppendLine(Center("Thank you for your purchase!"));
-        sb.AppendLine(Center("Please come again"));
-        sb.AppendLine(Line('='));
-        sb.AppendLine(Center("Powered by EzyCode"));
-        sb.AppendLine(Center("www.ezycode.lk"));
-
-        return sb.ToString();
-    }
-
-    /// <summary>
-    /// Send receipt directly to the Epson 3-inch thermal printer via USB.
-    /// Uses ESC/POS commands. Epson printers on Windows are accessible via
-    /// shared printer name or raw port. Also saves receipt locally as backup.
-    /// </summary>
-    private async Task PrintToThermal(string receiptText)
-    {
-        // Always save receipt locally as backup
         try
         {
             string receiptDir = Path.Combine(FileSystem.AppDataDirectory, "receipts");
             Directory.CreateDirectory(receiptDir);
-            string filePath = Path.Combine(receiptDir, $"receipt_{DateTime.Now:yyyyMMdd_HHmmss}.txt");
-            await File.WriteAllTextAsync(filePath, receiptText);
+            await File.WriteAllTextAsync(
+                Path.Combine(receiptDir, $"receipt_{DateTime.Now:yyyyMMdd_HHmmss}.txt"),
+                $"Invoice: {sale.InvoiceNumber} | Total: LKR {sale.TotalAmount:N2}");
         }
-        catch { /* backup save failed, not critical */ }
+        catch { }
 
         try
         {
-            // Epson USB thermal printer — configurable path
-            // Default: try common Epson USB printer share name
-            // User can override via Preferences if the printer has a different name
             string printerPath = Preferences.Get("ThermalPrinterPath", "");
-
             if (string.IsNullOrEmpty(printerPath))
             {
-                // Auto-detect: On Windows, Epson USB printers typically appear as
-                // a shared printer. Try common names.
                 var candidates = new[] { "EPSON", "EPSON TM", "Receipt", "POS" };
                 foreach (var name in candidates)
                 {
                     string testPath = $@"\\localhost\{name}";
                     if (File.Exists(testPath) || Directory.Exists(testPath))
-                    {
-                        printerPath = testPath;
-                        break;
-                    }
+                    { printerPath = testPath; break; }
                 }
             }
 
             if (!string.IsNullOrEmpty(printerPath))
             {
-                // ESC/POS command sequence for Epson thermal
-                byte[] init = { 0x1B, 0x40 };           // ESC @ — initialize printer
-                byte[] alignCenter = { 0x1B, 0x61, 0x01 }; // ESC a 1 — center align (for header)
-                byte[] alignLeft = { 0x1B, 0x61, 0x00 };   // ESC a 0 — left align
-                byte[] feedCut = { 0x0A, 0x0A, 0x0A, 0x1D, 0x56, 0x41, 0x03 }; // Feed + GS V A 3 (partial cut)
-
-                byte[] textBytes = Encoding.GetEncoding("IBM437").GetBytes(receiptText);
+                var enc = Encoding.GetEncoding("IBM437");
+                byte[] init = { 0x1B, 0x40 };
+                byte[] center = { 0x1B, 0x61, 0x01 };
+                byte[] left = { 0x1B, 0x61, 0x00 };
+                byte[] feedCut = { 0x0A, 0x0A, 0x0A, 0x1D, 0x56, 0x41, 0x03 };
 
                 using var fs = new FileStream(printerPath, FileMode.Open, FileAccess.Write);
                 await fs.WriteAsync(init);
-                await fs.WriteAsync(alignLeft);
-                await fs.WriteAsync(textBytes);
+
+                // Header — printer centers these
+                await fs.WriteAsync(center);
+                await fs.WriteAsync(enc.GetBytes("The Royal Bakery\n"));
+                await fs.WriteAsync(enc.GetBytes("202, Galle Road, Colombo-06\n"));
+                await fs.WriteAsync(enc.GetBytes("0112 500 991 / 0114 341 642\n"));
+                await fs.WriteAsync(enc.GetBytes("www.theroyalbakery.com\n"));
+                await fs.WriteAsync(enc.GetBytes(Separator('=') + "\n"));
+
+                // Body — left aligned rows
+                await fs.WriteAsync(left);
+                await fs.WriteAsync(enc.GetBytes(Row("Invoice #:", sale.InvoiceNumber) + "\n"));
+                await fs.WriteAsync(enc.GetBytes(Row("Date:", sale.DateTime.ToString("dd/MM/yyyy HH:mm")) + "\n"));
+                await fs.WriteAsync(enc.GetBytes(Row("Cashier:", sale.CashierName ?? "Cashier") + "\n"));
+                await fs.WriteAsync(enc.GetBytes(Separator() + "\n"));
+
+                foreach (var item in sale.Items)
+                {
+                    await fs.WriteAsync(enc.GetBytes(item.ItemName + "\n"));
+                    await fs.WriteAsync(enc.GetBytes(Row($"  {item.Quantity} x LKR {item.PricePerItem:N2}", $"LKR {item.TotalPrice:N2}") + "\n"));
+                }
+
+                await fs.WriteAsync(enc.GetBytes(Separator() + "\n"));
+                await fs.WriteAsync(enc.GetBytes(Row("Subtotal", $"LKR {sale.TotalAmount:N2}") + "\n"));
+                await fs.WriteAsync(enc.GetBytes(Separator('=') + "\n"));
+                await fs.WriteAsync(enc.GetBytes(Row("TOTAL", $"LKR {sale.TotalAmount:N2}") + "\n"));
+                await fs.WriteAsync(enc.GetBytes(Separator() + "\n"));
+
+                if (cash > 0) await fs.WriteAsync(enc.GetBytes(Row("Cash", $"LKR {cash:N2}") + "\n"));
+                if (card > 0) await fs.WriteAsync(enc.GetBytes(Row("Card", $"LKR {card:N2}") + "\n"));
+                await fs.WriteAsync(enc.GetBytes(Row("Change", $"LKR {change:N2}") + "\n"));
+                await fs.WriteAsync(enc.GetBytes(Separator() + "\n"));
+
+                // Footer — printer centers these
+                await fs.WriteAsync(center);
+                await fs.WriteAsync(enc.GetBytes("Thank you for your purchase!\n"));
+                await fs.WriteAsync(enc.GetBytes("Please come again\n"));
+                await fs.WriteAsync(enc.GetBytes(Separator('=') + "\n"));
+                await fs.WriteAsync(enc.GetBytes("Powered by EzyCode\n"));
+                await fs.WriteAsync(enc.GetBytes("www.ezycode.lk\n"));
+
                 await fs.WriteAsync(feedCut);
                 await fs.FlushAsync();
             }
-            // If no printer path found, receipt is still saved locally
         }
-        catch
-        {
-            // Print failure doesn't block the sale — it's already saved in Sales table
-        }
+        catch { }
     }
 }

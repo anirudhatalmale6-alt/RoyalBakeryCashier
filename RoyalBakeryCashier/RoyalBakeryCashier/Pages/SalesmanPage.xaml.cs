@@ -23,6 +23,7 @@ public partial class SalesmanPage : ContentPage
         _dbContext = new StockDbContext();
         _cartItems = new ObservableCollection<CartItem>();
         CartCollectionView.ItemsSource = _cartItems;
+        Title = $"{App.TerminalName} Terminal";
     }
 
     protected override async void OnAppearing()
@@ -289,7 +290,7 @@ public partial class SalesmanPage : ContentPage
             CreatedAt = DateTime.Now,
             TotalAmount = _cartItems.Sum(c => c.Total),
             Status = 0, // Pending
-            TerminalName = "Salesman",
+            TerminalName = App.TerminalName,
             CustomerName = string.IsNullOrWhiteSpace(CustomerNameEntry.Text)
                 ? null : CustomerNameEntry.Text.Trim(),
             Items = _cartItems.Select(c => new SalesOrderItem
@@ -305,8 +306,7 @@ public partial class SalesmanPage : ContentPage
         await _dbContext.SaveChangesAsync();
 
         // Print sales order slip with QR code
-        string slipText = BuildOrderSlip(salesOrder);
-        await PrintToThermal(slipText, salesOrder.SalesOrderNumber);
+        await PrintOrderSlip(salesOrder);
 
         await DisplayAlert("Order Created",
             $"{orderNumber} created — {_cartItems.Count} items, LKR {salesOrder.TotalAmount:N2}\n\nGive the printed slip to the customer for payment at the cashier.",
@@ -320,57 +320,20 @@ public partial class SalesmanPage : ContentPage
         RefreshCart();
     }
 
-    private string BuildOrderSlip(SalesOrder order)
+    private async Task PrintOrderSlip(SalesOrder order)
     {
-        const int W = 42;
-        var sb = new StringBuilder();
+        const int W = 48;
+        string Separator(char c = '-') => new string(c, W);
+        string Row(string l, string r) => l + r.PadLeft(W - l.Length);
 
-        string Line(char c = '-') => new string(c, W);
-        string Center(string s) => s.PadLeft((W + s.Length) / 2).PadRight(W);
-        string Row(string left, string right) => left + right.PadLeft(W - left.Length);
-
-        sb.AppendLine(Center("The Royal Bakery"));
-        sb.AppendLine(Center("202, Galle Road, Colombo-06"));
-        sb.AppendLine(Center("0112 500 991 / 0114 341 642"));
-        sb.AppendLine(Center("www.theroyalbakery.com"));
-        sb.AppendLine(Line('='));
-        sb.AppendLine(Center("*** SALES ORDER ***"));
-        sb.AppendLine(Line());
-        sb.AppendLine(Row("Order #:", order.SalesOrderNumber));
-        sb.AppendLine(Row("Date:", order.CreatedAt.ToString("dd/MM/yyyy HH:mm")));
-        if (!string.IsNullOrEmpty(order.CustomerName))
-            sb.AppendLine(Row("Customer:", order.CustomerName));
-        sb.AppendLine(Line());
-
-        foreach (var item in order.Items)
-        {
-            var menuItem = _dbContext.MenuItems.Find(item.MenuItemId);
-            string itemName = menuItem?.Name ?? "Unknown";
-            sb.AppendLine(itemName);
-            sb.AppendLine(Row($" {item.Quantity} x {item.PricePerItem:N2}", $"{item.TotalPrice:N2}"));
-        }
-
-        sb.AppendLine(Line());
-        sb.AppendLine(Row("TOTAL", $"LKR {order.TotalAmount:N2}"));
-        sb.AppendLine(Line('='));
-        sb.AppendLine(Center($"[ {order.SalesOrderNumber} ]"));
-        sb.AppendLine(Center("Present at cashier for payment"));
-        sb.AppendLine(Line());
-        sb.AppendLine(Center("Powered by EzyCode"));
-        sb.AppendLine(Center("www.ezycode.lk"));
-
-        return sb.ToString();
-    }
-
-    private async Task PrintToThermal(string text, string qrData = null)
-    {
         // Save locally as backup
         try
         {
             string dir = Path.Combine(FileSystem.AppDataDirectory, "orders");
             Directory.CreateDirectory(dir);
-            string filePath = Path.Combine(dir, $"order_{DateTime.Now:yyyyMMdd_HHmmss}.txt");
-            await File.WriteAllTextAsync(filePath, text);
+            await File.WriteAllTextAsync(
+                Path.Combine(dir, $"order_{DateTime.Now:yyyyMMdd_HHmmss}.txt"),
+                $"Order: {order.SalesOrderNumber} | Total: LKR {order.TotalAmount:N2}");
         }
         catch { }
 
@@ -379,28 +342,56 @@ public partial class SalesmanPage : ContentPage
             string printerPath = Preferences.Get("ThermalPrinterPath", "");
             if (!string.IsNullOrEmpty(printerPath))
             {
+                var enc = Encoding.GetEncoding("IBM437");
                 byte[] init = { 0x1B, 0x40 };
-                byte[] alignLeft = { 0x1B, 0x61, 0x00 };
-                byte[] alignCenter = { 0x1B, 0x61, 0x01 };
+                byte[] center = { 0x1B, 0x61, 0x01 };
+                byte[] left = { 0x1B, 0x61, 0x00 };
                 byte[] feedCut = { 0x0A, 0x0A, 0x0A, 0x1D, 0x56, 0x41, 0x03 };
-                byte[] textBytes = Encoding.GetEncoding("IBM437").GetBytes(text);
 
                 using var fs = new FileStream(printerPath, FileMode.Open, FileAccess.Write);
                 await fs.WriteAsync(init);
-                await fs.WriteAsync(alignLeft);
-                await fs.WriteAsync(textBytes);
 
-                // Print QR code using native ESC/POS commands (Epson TM series)
-                if (!string.IsNullOrEmpty(qrData))
+                // Header — centered
+                await fs.WriteAsync(center);
+                await fs.WriteAsync(enc.GetBytes("The Royal Bakery\n"));
+                await fs.WriteAsync(enc.GetBytes("202, Galle Road, Colombo-06\n"));
+                await fs.WriteAsync(enc.GetBytes("0112 500 991 / 0114 341 642\n"));
+                await fs.WriteAsync(enc.GetBytes("www.theroyalbakery.com\n"));
+                await fs.WriteAsync(enc.GetBytes(Separator('=') + "\n"));
+                await fs.WriteAsync(enc.GetBytes("*** SALES ORDER ***\n"));
+                await fs.WriteAsync(enc.GetBytes(Separator() + "\n"));
+
+                // Body — left aligned
+                await fs.WriteAsync(left);
+                await fs.WriteAsync(enc.GetBytes(Row("Order #:", order.SalesOrderNumber) + "\n"));
+                await fs.WriteAsync(enc.GetBytes(Row("Date:", order.CreatedAt.ToString("dd/MM/yyyy HH:mm")) + "\n"));
+                await fs.WriteAsync(enc.GetBytes(Row("Terminal:", App.TerminalName) + "\n"));
+                if (!string.IsNullOrEmpty(order.CustomerName))
+                    await fs.WriteAsync(enc.GetBytes(Row("Customer:", order.CustomerName) + "\n"));
+                await fs.WriteAsync(enc.GetBytes(Separator() + "\n"));
+
+                foreach (var item in order.Items)
                 {
-                    await fs.WriteAsync(alignCenter);
-                    byte[] qrBytes = BuildEscPosQR(qrData);
-                    await fs.WriteAsync(qrBytes);
-                    await fs.WriteAsync(alignLeft);
-                    // Label below QR
-                    byte[] label = Encoding.GetEncoding("IBM437").GetBytes("\n  Scan at cashier for payment\n");
-                    await fs.WriteAsync(label);
+                    var menuItem = _dbContext.MenuItems.Find(item.MenuItemId);
+                    string itemName = menuItem?.Name ?? "Unknown";
+                    await fs.WriteAsync(enc.GetBytes(itemName + "\n"));
+                    await fs.WriteAsync(enc.GetBytes(Row($" {item.Quantity} x {item.PricePerItem:N2}", $"{item.TotalPrice:N2}") + "\n"));
                 }
+
+                await fs.WriteAsync(enc.GetBytes(Separator() + "\n"));
+                await fs.WriteAsync(enc.GetBytes(Row("TOTAL", $"LKR {order.TotalAmount:N2}") + "\n"));
+                await fs.WriteAsync(enc.GetBytes(Separator('=') + "\n"));
+
+                // QR code + footer — centered
+                await fs.WriteAsync(center);
+                byte[] qrBytes = BuildEscPosQR(order.SalesOrderNumber);
+                await fs.WriteAsync(qrBytes);
+                await fs.WriteAsync(enc.GetBytes("\n"));
+                await fs.WriteAsync(enc.GetBytes($"[ {order.SalesOrderNumber} ]\n"));
+                await fs.WriteAsync(enc.GetBytes("Present at cashier for payment\n"));
+                await fs.WriteAsync(enc.GetBytes(Separator() + "\n"));
+                await fs.WriteAsync(enc.GetBytes("Powered by EzyCode\n"));
+                await fs.WriteAsync(enc.GetBytes("www.ezycode.lk\n"));
 
                 await fs.WriteAsync(feedCut);
                 await fs.FlushAsync();

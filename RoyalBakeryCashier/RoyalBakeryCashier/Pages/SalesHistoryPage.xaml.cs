@@ -64,10 +64,8 @@ public partial class SalesHistoryPage : ContentPage
             var sale = _db.Sales.Include(s => s.Items).FirstOrDefault(s => s.Id == saleId);
             if (sale == null) return;
 
-            string receipt = BuildReceiptText(sale);
-
             // Show receipt on white background like real thermal paper
-            await Navigation.PushAsync(new ReceiptViewPage(sale.InvoiceNumber, receipt, sale, this));
+            await Navigation.PushAsync(new ReceiptViewPage(sale.InvoiceNumber, sale, this));
         }
     }
 
@@ -81,7 +79,7 @@ public partial class SalesHistoryPage : ContentPage
         private static readonly Color Grey = Color.FromArgb("#555555");
         private static readonly Color LightGrey = Color.FromArgb("#999999");
 
-        public ReceiptViewPage(string invoiceNumber, string receiptText, Sale sale, SalesHistoryPage parent)
+        public ReceiptViewPage(string invoiceNumber, Sale sale, SalesHistoryPage parent)
         {
             Title = invoiceNumber;
             BackgroundColor = Color.FromArgb("#1A1A1A");
@@ -256,8 +254,7 @@ public partial class SalesHistoryPage : ContentPage
 
     public async Task ReprintSale(Sale sale)
     {
-        string receipt = BuildReceiptText(sale);
-        await PrintToThermal(receipt);
+        await PrintToThermal(sale);
         await DisplayAlert("Reprint", $"{sale.InvoiceNumber} sent to printer.", "OK");
     }
 
@@ -267,7 +264,6 @@ public partial class SalesHistoryPage : ContentPage
         {
             var sale = _db.Sales.Include(s => s.Items).FirstOrDefault(s => s.Id == saleId);
             if (sale == null) return;
-
             await ReprintSale(sale);
         }
     }
@@ -278,76 +274,72 @@ public partial class SalesHistoryPage : ContentPage
     }
 
     /// <summary>
-    /// Build plain-text receipt for 3-inch (80mm) thermal printer.
-    /// Same format as PaymentPage uses.
+    /// Print reprint receipt using ESC/POS with proper alignment on 3-inch paper.
     /// </summary>
-    private string BuildReceiptText(Sale sale)
+    private async Task PrintToThermal(Sale sale)
     {
-        const int W = 42;
-        var sb = new StringBuilder();
+        const int W = 48;
+        string Separator(char c = '-') => new string(c, W);
+        string Row(string l, string r) => l + r.PadLeft(W - l.Length);
 
-        string Line(char c = '-') => new string(c, W);
-        string Center(string s) => s.PadLeft((W + s.Length) / 2).PadRight(W);
-        string Row(string left, string right) => left + right.PadLeft(W - left.Length);
+        decimal change = (sale.CashAmount + sale.CardAmount) - sale.TotalAmount;
+        if (change < 0) change = 0;
 
-        sb.AppendLine(Center("The Royal Bakery"));
-        sb.AppendLine(Center("202, Galle Road, Colombo-06"));
-        sb.AppendLine(Center("0112 500 991 / 0114 341 642"));
-        sb.AppendLine(Center("www.theroyalbakery.com"));
-        sb.AppendLine(Line('='));
-
-        sb.AppendLine(Row("Invoice #:", sale.InvoiceNumber));
-        sb.AppendLine(Row("Date:", sale.DateTime.ToString("dd/MM/yyyy HH:mm")));
-        sb.AppendLine(Row("Cashier:", sale.CashierName ?? "Cashier"));
-        sb.AppendLine(Line());
-
-        foreach (var item in sale.Items)
-        {
-            sb.AppendLine(item.ItemName);
-            sb.AppendLine(Row($"  {item.Quantity} x LKR {item.PricePerItem:N2}", $"LKR {item.TotalPrice:N2}"));
-        }
-
-        sb.AppendLine(Line());
-        sb.AppendLine(Row("Subtotal", $"LKR {sale.TotalAmount:N2}"));
-        sb.AppendLine(Line('='));
-        sb.AppendLine(Row("TOTAL", $"LKR {sale.TotalAmount:N2}"));
-        sb.AppendLine(Line());
-
-        if (sale.CashAmount > 0) sb.AppendLine(Row("Cash", $"LKR {sale.CashAmount:N2}"));
-        if (sale.CardAmount > 0) sb.AppendLine(Row("Card", $"LKR {sale.CardAmount:N2}"));
-        sb.AppendLine(Row("Change", $"LKR {sale.ChangeGiven:N2}"));
-        sb.AppendLine(Line());
-
-        sb.AppendLine(Center("** REPRINT **"));
-        sb.AppendLine(Center("Thank you for your purchase!"));
-        sb.AppendLine(Center("Please come again"));
-        sb.AppendLine(Line('='));
-        sb.AppendLine(Center("Powered by EzyCode"));
-        sb.AppendLine(Center("www.ezycode.lk"));
-
-        return sb.ToString();
-    }
-
-    /// <summary>
-    /// Send to Epson thermal printer (same logic as PaymentPage).
-    /// </summary>
-    private async Task PrintToThermal(string receiptText)
-    {
         try
         {
             string printerPath = Preferences.Get("ThermalPrinterPath", "");
-
             if (!string.IsNullOrEmpty(printerPath))
             {
+                var enc = Encoding.GetEncoding("IBM437");
                 byte[] init = { 0x1B, 0x40 };
-                byte[] alignLeft = { 0x1B, 0x61, 0x00 };
+                byte[] center = { 0x1B, 0x61, 0x01 };
+                byte[] left = { 0x1B, 0x61, 0x00 };
                 byte[] feedCut = { 0x0A, 0x0A, 0x0A, 0x1D, 0x56, 0x41, 0x03 };
-                byte[] textBytes = Encoding.GetEncoding("IBM437").GetBytes(receiptText);
 
                 using var fs = new FileStream(printerPath, FileMode.Open, FileAccess.Write);
                 await fs.WriteAsync(init);
-                await fs.WriteAsync(alignLeft);
-                await fs.WriteAsync(textBytes);
+
+                // Header — centered
+                await fs.WriteAsync(center);
+                await fs.WriteAsync(enc.GetBytes("The Royal Bakery\n"));
+                await fs.WriteAsync(enc.GetBytes("202, Galle Road, Colombo-06\n"));
+                await fs.WriteAsync(enc.GetBytes("0112 500 991 / 0114 341 642\n"));
+                await fs.WriteAsync(enc.GetBytes("www.theroyalbakery.com\n"));
+                await fs.WriteAsync(enc.GetBytes(Separator('=') + "\n"));
+
+                // Body — left aligned
+                await fs.WriteAsync(left);
+                await fs.WriteAsync(enc.GetBytes(Row("Invoice #:", sale.InvoiceNumber) + "\n"));
+                await fs.WriteAsync(enc.GetBytes(Row("Date:", sale.DateTime.ToString("dd/MM/yyyy HH:mm")) + "\n"));
+                await fs.WriteAsync(enc.GetBytes(Row("Cashier:", sale.CashierName ?? "Cashier") + "\n"));
+                await fs.WriteAsync(enc.GetBytes(Separator() + "\n"));
+
+                foreach (var item in sale.Items)
+                {
+                    await fs.WriteAsync(enc.GetBytes(item.ItemName + "\n"));
+                    await fs.WriteAsync(enc.GetBytes(Row($"  {item.Quantity} x LKR {item.PricePerItem:N2}", $"LKR {item.TotalPrice:N2}") + "\n"));
+                }
+
+                await fs.WriteAsync(enc.GetBytes(Separator() + "\n"));
+                await fs.WriteAsync(enc.GetBytes(Row("Subtotal", $"LKR {sale.TotalAmount:N2}") + "\n"));
+                await fs.WriteAsync(enc.GetBytes(Separator('=') + "\n"));
+                await fs.WriteAsync(enc.GetBytes(Row("TOTAL", $"LKR {sale.TotalAmount:N2}") + "\n"));
+                await fs.WriteAsync(enc.GetBytes(Separator() + "\n"));
+
+                if (sale.CashAmount > 0) await fs.WriteAsync(enc.GetBytes(Row("Cash", $"LKR {sale.CashAmount:N2}") + "\n"));
+                if (sale.CardAmount > 0) await fs.WriteAsync(enc.GetBytes(Row("Card", $"LKR {sale.CardAmount:N2}") + "\n"));
+                await fs.WriteAsync(enc.GetBytes(Row("Change", $"LKR {change:N2}") + "\n"));
+                await fs.WriteAsync(enc.GetBytes(Separator() + "\n"));
+
+                // Footer — centered
+                await fs.WriteAsync(center);
+                await fs.WriteAsync(enc.GetBytes("** REPRINT **\n"));
+                await fs.WriteAsync(enc.GetBytes("Thank you for your purchase!\n"));
+                await fs.WriteAsync(enc.GetBytes("Please come again\n"));
+                await fs.WriteAsync(enc.GetBytes(Separator('=') + "\n"));
+                await fs.WriteAsync(enc.GetBytes("Powered by EzyCode\n"));
+                await fs.WriteAsync(enc.GetBytes("www.ezycode.lk\n"));
+
                 await fs.WriteAsync(feedCut);
                 await fs.FlushAsync();
             }
