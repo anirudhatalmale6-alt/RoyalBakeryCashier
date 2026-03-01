@@ -15,25 +15,33 @@ public partial class SalesmanPage : ContentPage
     private ObservableCollection<ItemViewModel> _filteredItems;
     private ObservableCollection<CartItem> _cartItems;
 
+    private bool _loaded = false;
+
     public SalesmanPage()
     {
         InitializeComponent();
         _dbContext = new StockDbContext();
         _cartItems = new ObservableCollection<CartItem>();
         CartCollectionView.ItemsSource = _cartItems;
+    }
+
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+        if (_loaded) return;
+        _loaded = true;
 
         try
         {
-            _dbContext.Database.EnsureCreated();
+            await Task.Run(() => _dbContext.Database.EnsureCreated());
             LoadCategories();
             LoadItems();
         }
         catch (Exception ex)
         {
-            MainThread.BeginInvokeOnMainThread(async () =>
-                await DisplayAlert("Database Error",
-                    $"Could not connect to SQL Server.\n\nMake sure SQL Server Express is running and the database exists.\n\nError: {ex.Message}",
-                    "OK"));
+            await DisplayAlert("Database Error",
+                $"Could not connect to SQL Server.\n\nMake sure SQL Server is running and the database exists.\n\nError: {ex.Message}",
+                "OK");
         }
     }
 
@@ -318,6 +326,8 @@ public partial class SalesmanPage : ContentPage
 
         sb.AppendLine(Center("The Royal Bakery"));
         sb.AppendLine(Center("202, Galle Road, Colombo-06"));
+        sb.AppendLine(Center("0112 500 991 / 0114 341 642"));
+        sb.AppendLine(Center("www.theroyalbakery.com"));
         sb.AppendLine(Line('='));
         sb.AppendLine(Center("*** SALES ORDER ***"));
         sb.AppendLine(Line());

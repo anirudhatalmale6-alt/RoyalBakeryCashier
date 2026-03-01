@@ -274,6 +274,8 @@ public partial class SalesHistoryPage : ContentPage
 
         sb.AppendLine(Center("The Royal Bakery"));
         sb.AppendLine(Center("202, Galle Road, Colombo-06"));
+        sb.AppendLine(Center("0112 500 991 / 0114 341 642"));
+        sb.AppendLine(Center("www.theroyalbakery.com"));
         sb.AppendLine(Line('='));
 
         sb.AppendLine(Row("Invoice #:", sale.InvoiceNumber));
