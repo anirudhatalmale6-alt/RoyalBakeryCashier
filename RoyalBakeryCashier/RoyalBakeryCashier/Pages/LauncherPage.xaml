@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="RoyalBakeryCashier.Pages.LauncherPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    BackgroundColor="{StaticResource PageBg}"
+    Shell.NavBarIsVisible="False"
+    NavigationPage.HasNavigationBar="False"
+    Title="Royal Bakery POS">
+
+    <Grid VerticalOptions="Center" HorizontalOptions="Center" RowDefinitions="Auto,Auto,Auto" RowSpacing="30">
+
+        <Label Text="The Royal Bakery"
+               FontSize="36"
+               FontAttributes="Bold"
+               TextColor="White"
+               HorizontalTextAlignment="Center"/>
+
+        <HorizontalStackLayout Grid.Row="1" Spacing="30" HorizontalOptions="Center">
+
+            <!-- Cashier Mode -->
+            <Frame BackgroundColor="{StaticResource CardBg}"
+                   Padding="40,50"
+                   CornerRadius="16"
+                   BorderColor="{StaticResource PlaceOrderBtn}"
+                   WidthRequest="280">
+                <VerticalStackLayout Spacing="12" HorizontalOptions="Center">
+                    <Label Text="CASHIER"
+                           FontSize="28"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource PlaceOrderBtn}"
+                           HorizontalTextAlignment="Center"/>
+                    <Label Text="Process payments"
+                           FontSize="14"
+                           TextColor="{StaticResource Gray300}"
+                           HorizontalTextAlignment="Center"/>
+                    <Button Text="Open Cashier"
+                            BackgroundColor="{StaticResource PlaceOrderBtn}"
+                            TextColor="White"
+                            FontSize="16"
+                            FontAttributes="Bold"
+                            HeightRequest="48"
+                            CornerRadius="10"
+                            Clicked="OpenCashier_Clicked"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Salesman Mode -->
+            <Frame BackgroundColor="{StaticResource CardBg}"
+                   Padding="40,50"
+                   CornerRadius="16"
+                   BorderColor="{StaticResource CatBread}"
+                   WidthRequest="280">
+                <VerticalStackLayout Spacing="12" HorizontalOptions="Center">
+                    <Label Text="SALESMAN"
+                           FontSize="28"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource CatBread}"
+                           HorizontalTextAlignment="Center"/>
+                    <Label Text="Create sales orders"
+                           FontSize="14"
+                           TextColor="{StaticResource Gray300}"
+                           HorizontalTextAlignment="Center"/>
+                    <Button Text="Open Salesman"
+                            BackgroundColor="{StaticResource CatBread}"
+                            TextColor="White"
+                            FontSize="16"
+                            FontAttributes="Bold"
+                            HeightRequest="48"
+                            CornerRadius="10"
+                            Clicked="OpenSalesman_Clicked"/>
+                </VerticalStackLayout>
+            </Frame>
+
+        </HorizontalStackLayout>
+
+        <Label Grid.Row="2"
+               Text="Powered by EzyCode — www.ezycode.lk"
+               FontSize="12"
+               TextColor="{StaticResource Gray400}"
+               HorizontalTextAlignment="Center"/>
+
+    </Grid>
+</ContentPage>
