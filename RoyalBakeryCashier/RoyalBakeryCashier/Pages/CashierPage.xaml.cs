@@ -113,11 +113,19 @@ namespace RoyalBakeryCashier.Pages
 
         private async void SalesHistory_Clicked(object sender, EventArgs e)
         {
-            await Navigation.PushModalAsync(new NavigationPage(new SalesHistoryPage())
+            try
             {
-                BarBackgroundColor = Color.FromArgb("#1A1A1A"),
-                BarTextColor = Colors.White
-            });
+                await Navigation.PushModalAsync(new NavigationPage(new SalesHistoryPage())
+                {
+                    BarBackgroundColor = Color.FromArgb("#1A1A1A"),
+                    BarTextColor = Colors.White
+                });
+            }
+            catch (Exception ex)
+            {
+                App.LogCrash("SalesHistory_Clicked", ex);
+                await DisplayAlert("Error", $"Could not open Sales History.\n\n{ex.Message}", "OK");
+            }
         }
 
         // ===== SALES ORDER LOADING =====

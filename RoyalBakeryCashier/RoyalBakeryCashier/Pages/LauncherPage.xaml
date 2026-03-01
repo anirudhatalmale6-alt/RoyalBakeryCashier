@@ -74,11 +74,21 @@
 
         </HorizontalStackLayout>
 
-        <Label Grid.Row="2"
-               Text="Powered by EzyCode — www.ezycode.lk"
-               FontSize="12"
-               TextColor="{StaticResource Gray400}"
-               HorizontalTextAlignment="Center"/>
+        <VerticalStackLayout Grid.Row="2" Spacing="8" HorizontalOptions="Center">
+            <Label Text="Powered by EzyCode — www.ezycode.lk"
+                   FontSize="12"
+                   TextColor="{StaticResource Gray400}"
+                   HorizontalTextAlignment="Center"/>
+            <Label Text="View Crash Log"
+                   FontSize="11"
+                   TextColor="{StaticResource Gray600}"
+                   HorizontalTextAlignment="Center"
+                   TextDecorations="Underline">
+                <Label.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="ViewCrashLog_Tapped"/>
+                </Label.GestureRecognizers>
+            </Label>
+        </VerticalStackLayout>
 
     </Grid>
 </ContentPage>
