@@ -83,15 +83,6 @@ namespace RoyalBakeryCashier.Pages
             await Shell.Current.GoToAsync("ClearStock");
         }
 
-        private async void GRN_Clicked(object sender, EventArgs e)
-        {
-            await Navigation.PushModalAsync(new NavigationPage(new GRNPage())
-            {
-                BarBackgroundColor = Color.FromArgb("#1A1A1A"),
-                BarTextColor = Colors.White
-            });
-        }
-
         private async void SalesHistory_Clicked(object sender, EventArgs e)
         {
             await Navigation.PushModalAsync(new NavigationPage(new SalesHistoryPage())

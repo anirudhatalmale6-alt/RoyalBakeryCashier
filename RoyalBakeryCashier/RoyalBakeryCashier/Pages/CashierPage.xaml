@@ -44,14 +44,6 @@
                                 Clicked="LoadSalesOrder_Clicked"/>
                     </HorizontalStackLayout>
                 </Frame>
-                <Button Text="GRN"
-                        FontSize="13"
-                        HeightRequest="36"
-                        Padding="12,0"
-                        CornerRadius="8"
-                        BackgroundColor="{StaticResource CatCakes}"
-                        TextColor="White"
-                        Clicked="GRN_Clicked"/>
                 <Button Text="Sales History"
                         FontSize="13"
                         HeightRequest="36"
