@@ -31,7 +31,11 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<BakeryDbContext>();
     try
     {
-        // Create all missing tables with IF NOT EXISTS checks
+        // Ensure database exists first (creates DB + all tables if brand new)
+        db.Database.EnsureCreated();
+        Console.WriteLine("Database ensured.");
+
+        // Then add any individual missing tables (for existing DBs missing newer tables)
         db.Database.ExecuteSqlRaw(@"
             IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='MenuCategories' AND xtype='U')
             CREATE TABLE MenuCategories (
@@ -139,9 +143,16 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"DB init error: {ex.Message}");
+        Console.WriteLine($"========================================");
+        Console.WriteLine($"DB INIT ERROR: {ex.Message}");
+        Console.WriteLine($"Inner: {ex.InnerException?.Message}");
+        Console.WriteLine($"========================================");
+        Console.WriteLine("API will continue but database may not be ready!");
     }
 }
+
+// Show detailed errors so we can debug 500s
+app.UseDeveloperExceptionPage();
 
 app.UseCors();
 app.MapControllers();

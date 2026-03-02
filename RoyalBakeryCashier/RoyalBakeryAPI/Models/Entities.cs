@@ -34,6 +34,7 @@ public class Stock
     public int Quantity { get; set; }
 }
 
+[Table("GRNs")]
 public class GRN
 {
     [Key]
@@ -60,6 +61,7 @@ public class GRNItem
     public int CurrentQuantity { get; set; }
 }
 
+[Table("GRNAdjustmentRequests")]
 public class GRNAdjustmentRequest
 {
     [Key]
@@ -73,6 +75,7 @@ public class GRNAdjustmentRequest
     public ICollection<GRNAdjustmentRequestItem> RequestedItems { get; set; } = new List<GRNAdjustmentRequestItem>();
 }
 
+[Table("GRNAdjustmentRequestItems")]
 public class GRNAdjustmentRequestItem
 {
     [Key]
@@ -86,6 +89,7 @@ public class GRNAdjustmentRequestItem
     public decimal Price { get; set; }
 }
 
+[Table("Clearances")]
 public class Clearance
 {
     [Key]
