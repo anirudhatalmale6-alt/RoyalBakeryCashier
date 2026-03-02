@@ -340,14 +340,14 @@ public partial class SalesHistoryPage : ContentPage
             }
 
             Emit(enc.GetBytes(Separator() + "\n"));
-            Emit(enc.GetBytes(Row("Subtotal", $"LKR {sale.TotalAmount:N2}") + "\n"));
+            Emit(enc.GetBytes(Row("Subtotal", $"Rs. {sale.TotalAmount:N2}") + "\n"));
             Emit(enc.GetBytes(Separator('=') + "\n"));
-            Emit(enc.GetBytes(Row("TOTAL", $"LKR {sale.TotalAmount:N2}") + "\n"));
+            Emit(enc.GetBytes(Row("TOTAL", $"Rs. {sale.TotalAmount:N2}") + "\n"));
             Emit(enc.GetBytes(Separator() + "\n"));
 
-            if (sale.CashAmount > 0) Emit(enc.GetBytes(Row("Cash", $"LKR {sale.CashAmount:N2}") + "\n"));
-            if (sale.CardAmount > 0) Emit(enc.GetBytes(Row("Card", $"LKR {sale.CardAmount:N2}") + "\n"));
-            Emit(enc.GetBytes(Row("Change", $"LKR {change:N2}") + "\n"));
+            if (sale.CashAmount > 0) Emit(enc.GetBytes(Row("Cash", $"Rs. {sale.CashAmount:N2}") + "\n"));
+            if (sale.CardAmount > 0) Emit(enc.GetBytes(Row("Card", $"Rs. {sale.CardAmount:N2}") + "\n"));
+            Emit(enc.GetBytes(Row("Change", $"Rs. {change:N2}") + "\n"));
             Emit(enc.GetBytes(Separator() + "\n"));
 
             // Footer — centered

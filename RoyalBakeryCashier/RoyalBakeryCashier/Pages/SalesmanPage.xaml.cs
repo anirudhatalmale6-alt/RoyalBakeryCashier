@@ -398,7 +398,7 @@ public partial class SalesmanPage : ContentPage
             }
 
             Emit(enc.GetBytes(Separator() + "\n"));
-            Emit(enc.GetBytes(Row("TOTAL", $"LKR {order.TotalAmount:N2}") + "\n"));
+            Emit(enc.GetBytes(Row("TOTAL", $"Rs. {order.TotalAmount:N2}") + "\n"));
             Emit(enc.GetBytes(Separator('=') + "\n"));
 
             // QR code + footer — centered

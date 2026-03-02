@@ -334,14 +334,14 @@ public partial class PaymentPage : ContentPage
             }
 
             Emit(enc.GetBytes(Separator() + "\n"));
-            Emit(enc.GetBytes(Row("Subtotal", $"LKR {sale.TotalAmount:N2}") + "\n"));
+            Emit(enc.GetBytes(Row("Subtotal", $"Rs. {sale.TotalAmount:N2}") + "\n"));
             Emit(enc.GetBytes(Separator('=') + "\n"));
-            Emit(enc.GetBytes(Row("TOTAL", $"LKR {sale.TotalAmount:N2}") + "\n"));
+            Emit(enc.GetBytes(Row("TOTAL", $"Rs. {sale.TotalAmount:N2}") + "\n"));
             Emit(enc.GetBytes(Separator() + "\n"));
 
-            if (cash > 0) Emit(enc.GetBytes(Row("Cash", $"LKR {cash:N2}") + "\n"));
-            if (card > 0) Emit(enc.GetBytes(Row("Card", $"LKR {card:N2}") + "\n"));
-            Emit(enc.GetBytes(Row("Change", $"LKR {change:N2}") + "\n"));
+            if (cash > 0) Emit(enc.GetBytes(Row("Cash", $"Rs. {cash:N2}") + "\n"));
+            if (card > 0) Emit(enc.GetBytes(Row("Card", $"Rs. {card:N2}") + "\n"));
+            Emit(enc.GetBytes(Row("Change", $"Rs. {change:N2}") + "\n"));
             Emit(enc.GetBytes(Separator() + "\n"));
 
             // Footer — centered
