@@ -330,7 +330,7 @@ public partial class PaymentPage : ContentPage
             foreach (var item in sale.Items)
             {
                 Emit(enc.GetBytes(item.ItemName + "\n"));
-                Emit(enc.GetBytes(Row($"  {item.Quantity} x LKR {item.PricePerItem:N2}", $"LKR {item.TotalPrice:N2}") + "\n"));
+                Emit(enc.GetBytes(Row($"  {item.Quantity} x {item.PricePerItem:N2}", $"{item.TotalPrice:N2}") + "\n"));
             }
 
             Emit(enc.GetBytes(Separator() + "\n"));
