@@ -308,50 +308,51 @@ public partial class PaymentPage : ContentPage
             byte[] feedCut = { 0x0A, 0x0A, 0x0A, 0x1D, 0x56, 0x41, 0x03 };
 
             using var ms = new MemoryStream();
+            void Emit(byte[] b) => ms.Write(b, 0, b.Length);
 
-            ms.Write(init);
+            Emit(init);
 
             // Header — centered
-            ms.Write(center);
-            ms.Write(enc.GetBytes("The Royal Bakery\n"));
-            ms.Write(enc.GetBytes("202, Galle Road, Colombo-06\n"));
-            ms.Write(enc.GetBytes("0112 500 991 / 0114 341 642\n"));
-            ms.Write(enc.GetBytes("www.theroyalbakery.com\n"));
-            ms.Write(enc.GetBytes(Separator('=') + "\n"));
+            Emit(center);
+            Emit(enc.GetBytes("The Royal Bakery\n"));
+            Emit(enc.GetBytes("202, Galle Road, Colombo-06\n"));
+            Emit(enc.GetBytes("0112 500 991 / 0114 341 642\n"));
+            Emit(enc.GetBytes("www.theroyalbakery.com\n"));
+            Emit(enc.GetBytes(Separator('=') + "\n"));
 
             // Body — left aligned
-            ms.Write(left);
-            ms.Write(enc.GetBytes(Row("Invoice #:", sale.InvoiceNumber) + "\n"));
-            ms.Write(enc.GetBytes(Row("Date:", sale.DateTime.ToString("dd/MM/yyyy HH:mm")) + "\n"));
-            ms.Write(enc.GetBytes(Row("Cashier:", sale.CashierName ?? "Cashier") + "\n"));
-            ms.Write(enc.GetBytes(Separator() + "\n"));
+            Emit(left);
+            Emit(enc.GetBytes(Row("Invoice #:", sale.InvoiceNumber) + "\n"));
+            Emit(enc.GetBytes(Row("Date:", sale.DateTime.ToString("dd/MM/yyyy HH:mm")) + "\n"));
+            Emit(enc.GetBytes(Row("Cashier:", sale.CashierName ?? "Cashier") + "\n"));
+            Emit(enc.GetBytes(Separator() + "\n"));
 
             foreach (var item in sale.Items)
             {
-                ms.Write(enc.GetBytes(item.ItemName + "\n"));
-                ms.Write(enc.GetBytes(Row($"  {item.Quantity} x LKR {item.PricePerItem:N2}", $"LKR {item.TotalPrice:N2}") + "\n"));
+                Emit(enc.GetBytes(item.ItemName + "\n"));
+                Emit(enc.GetBytes(Row($"  {item.Quantity} x LKR {item.PricePerItem:N2}", $"LKR {item.TotalPrice:N2}") + "\n"));
             }
 
-            ms.Write(enc.GetBytes(Separator() + "\n"));
-            ms.Write(enc.GetBytes(Row("Subtotal", $"LKR {sale.TotalAmount:N2}") + "\n"));
-            ms.Write(enc.GetBytes(Separator('=') + "\n"));
-            ms.Write(enc.GetBytes(Row("TOTAL", $"LKR {sale.TotalAmount:N2}") + "\n"));
-            ms.Write(enc.GetBytes(Separator() + "\n"));
+            Emit(enc.GetBytes(Separator() + "\n"));
+            Emit(enc.GetBytes(Row("Subtotal", $"LKR {sale.TotalAmount:N2}") + "\n"));
+            Emit(enc.GetBytes(Separator('=') + "\n"));
+            Emit(enc.GetBytes(Row("TOTAL", $"LKR {sale.TotalAmount:N2}") + "\n"));
+            Emit(enc.GetBytes(Separator() + "\n"));
 
-            if (cash > 0) ms.Write(enc.GetBytes(Row("Cash", $"LKR {cash:N2}") + "\n"));
-            if (card > 0) ms.Write(enc.GetBytes(Row("Card", $"LKR {card:N2}") + "\n"));
-            ms.Write(enc.GetBytes(Row("Change", $"LKR {change:N2}") + "\n"));
-            ms.Write(enc.GetBytes(Separator() + "\n"));
+            if (cash > 0) Emit(enc.GetBytes(Row("Cash", $"LKR {cash:N2}") + "\n"));
+            if (card > 0) Emit(enc.GetBytes(Row("Card", $"LKR {card:N2}") + "\n"));
+            Emit(enc.GetBytes(Row("Change", $"LKR {change:N2}") + "\n"));
+            Emit(enc.GetBytes(Separator() + "\n"));
 
             // Footer — centered
-            ms.Write(center);
-            ms.Write(enc.GetBytes("Thank you for your purchase!\n"));
-            ms.Write(enc.GetBytes("Please come again\n"));
-            ms.Write(enc.GetBytes(Separator('=') + "\n"));
-            ms.Write(enc.GetBytes("Powered by EzyCode\n"));
-            ms.Write(enc.GetBytes("www.ezycode.lk\n"));
+            Emit(center);
+            Emit(enc.GetBytes("Thank you for your purchase!\n"));
+            Emit(enc.GetBytes("Please come again\n"));
+            Emit(enc.GetBytes(Separator('=') + "\n"));
+            Emit(enc.GetBytes("Powered by EzyCode\n"));
+            Emit(enc.GetBytes("www.ezycode.lk\n"));
 
-            ms.Write(feedCut);
+            Emit(feedCut);
 
             // Send raw bytes to printer via Windows Print Spooler API
             bool printed = RawPrinterHelper.SendBytesToPrinter(printerName, ms.ToArray());

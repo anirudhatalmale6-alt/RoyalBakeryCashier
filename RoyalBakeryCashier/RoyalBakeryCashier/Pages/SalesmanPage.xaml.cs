@@ -366,52 +366,53 @@ public partial class SalesmanPage : ContentPage
             byte[] feedCut = { 0x0A, 0x0A, 0x0A, 0x1D, 0x56, 0x41, 0x03 };
 
             using var ms = new MemoryStream();
+            void Emit(byte[] b) => ms.Write(b, 0, b.Length);
 
-            ms.Write(init);
+            Emit(init);
 
             // Header — centered
-            ms.Write(center);
-            ms.Write(enc.GetBytes("The Royal Bakery\n"));
-            ms.Write(enc.GetBytes("202, Galle Road, Colombo-06\n"));
-            ms.Write(enc.GetBytes("0112 500 991 / 0114 341 642\n"));
-            ms.Write(enc.GetBytes("www.theroyalbakery.com\n"));
-            ms.Write(enc.GetBytes(Separator('=') + "\n"));
-            ms.Write(enc.GetBytes("*** SALES ORDER ***\n"));
-            ms.Write(enc.GetBytes(Separator() + "\n"));
+            Emit(center);
+            Emit(enc.GetBytes("The Royal Bakery\n"));
+            Emit(enc.GetBytes("202, Galle Road, Colombo-06\n"));
+            Emit(enc.GetBytes("0112 500 991 / 0114 341 642\n"));
+            Emit(enc.GetBytes("www.theroyalbakery.com\n"));
+            Emit(enc.GetBytes(Separator('=') + "\n"));
+            Emit(enc.GetBytes("*** SALES ORDER ***\n"));
+            Emit(enc.GetBytes(Separator() + "\n"));
 
             // Body — left aligned
-            ms.Write(left);
-            ms.Write(enc.GetBytes(Row("Order #:", order.SalesOrderNumber) + "\n"));
-            ms.Write(enc.GetBytes(Row("Date:", order.CreatedAt.ToString("dd/MM/yyyy HH:mm")) + "\n"));
-            ms.Write(enc.GetBytes(Row("Terminal:", App.TerminalName) + "\n"));
+            Emit(left);
+            Emit(enc.GetBytes(Row("Order #:", order.SalesOrderNumber) + "\n"));
+            Emit(enc.GetBytes(Row("Date:", order.CreatedAt.ToString("dd/MM/yyyy HH:mm")) + "\n"));
+            Emit(enc.GetBytes(Row("Terminal:", App.TerminalName) + "\n"));
             if (!string.IsNullOrEmpty(order.CustomerName))
-                ms.Write(enc.GetBytes(Row("Customer:", order.CustomerName) + "\n"));
-            ms.Write(enc.GetBytes(Separator() + "\n"));
+                Emit(enc.GetBytes(Row("Customer:", order.CustomerName) + "\n"));
+            Emit(enc.GetBytes(Separator() + "\n"));
 
             foreach (var item in order.Items)
             {
                 var menuItem = _dbContext.MenuItems.Find(item.MenuItemId);
                 string itemName = menuItem?.Name ?? "Unknown";
-                ms.Write(enc.GetBytes(itemName + "\n"));
-                ms.Write(enc.GetBytes(Row($" {item.Quantity} x {item.PricePerItem:N2}", $"{item.TotalPrice:N2}") + "\n"));
+                Emit(enc.GetBytes(itemName + "\n"));
+                Emit(enc.GetBytes(Row($" {item.Quantity} x {item.PricePerItem:N2}", $"{item.TotalPrice:N2}") + "\n"));
             }
 
-            ms.Write(enc.GetBytes(Separator() + "\n"));
-            ms.Write(enc.GetBytes(Row("TOTAL", $"LKR {order.TotalAmount:N2}") + "\n"));
-            ms.Write(enc.GetBytes(Separator('=') + "\n"));
+            Emit(enc.GetBytes(Separator() + "\n"));
+            Emit(enc.GetBytes(Row("TOTAL", $"LKR {order.TotalAmount:N2}") + "\n"));
+            Emit(enc.GetBytes(Separator('=') + "\n"));
 
             // QR code + footer — centered
-            ms.Write(center);
+            Emit(center);
             byte[] qrBytes = BuildEscPosQR(order.SalesOrderNumber);
-            ms.Write(qrBytes);
-            ms.Write(enc.GetBytes("\n"));
-            ms.Write(enc.GetBytes($"[ {order.SalesOrderNumber} ]\n"));
-            ms.Write(enc.GetBytes("Present at cashier for payment\n"));
-            ms.Write(enc.GetBytes(Separator() + "\n"));
-            ms.Write(enc.GetBytes("Powered by EzyCode\n"));
-            ms.Write(enc.GetBytes("www.ezycode.lk\n"));
+            Emit(qrBytes);
+            Emit(enc.GetBytes("\n"));
+            Emit(enc.GetBytes($"[ {order.SalesOrderNumber} ]\n"));
+            Emit(enc.GetBytes("Present at cashier for payment\n"));
+            Emit(enc.GetBytes(Separator() + "\n"));
+            Emit(enc.GetBytes("Powered by EzyCode\n"));
+            Emit(enc.GetBytes("www.ezycode.lk\n"));
 
-            ms.Write(feedCut);
+            Emit(feedCut);
 
             bool printed = RawPrinterHelper.SendBytesToPrinter(printerName, ms.ToArray());
             if (!printed)
