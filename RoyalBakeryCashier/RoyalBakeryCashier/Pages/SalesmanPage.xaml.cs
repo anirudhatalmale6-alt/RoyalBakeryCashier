@@ -3,6 +3,7 @@ using Microsoft.Maui.Controls;
 using Microsoft.Maui.Graphics;
 using RoyalBakeryCashier.Data;
 using RoyalBakeryCashier.Data.Entities;
+using RoyalBakeryCashier.Helpers;
 using System.Collections.ObjectModel;
 using System.Text;
 
@@ -339,65 +340,90 @@ public partial class SalesmanPage : ContentPage
 
         try
         {
-            string printerPath = Preferences.Get("ThermalPrinterPath", "");
-            if (!string.IsNullOrEmpty(printerPath))
+            // Find printer: saved preference or auto-detect
+            string printerName = Preferences.Get("ThermalPrinterName", "");
+            if (string.IsNullOrEmpty(printerName))
             {
-                var enc = Encoding.GetEncoding("IBM437");
-                byte[] init = { 0x1B, 0x40 };
-                byte[] center = { 0x1B, 0x61, 0x01 };
-                byte[] left = { 0x1B, 0x61, 0x00 };
-                byte[] feedCut = { 0x0A, 0x0A, 0x0A, 0x1D, 0x56, 0x41, 0x03 };
+                printerName = RawPrinterHelper.FindThermalPrinter() ?? "";
+                if (!string.IsNullOrEmpty(printerName))
+                    Preferences.Set("ThermalPrinterName", printerName);
+            }
 
-                using var fs = new FileStream(printerPath, FileMode.Open, FileAccess.Write);
-                await fs.WriteAsync(init);
+            if (string.IsNullOrEmpty(printerName))
+            {
+                var printers = RawPrinterHelper.GetInstalledPrinters();
+                string msg = printers.Count > 0
+                    ? $"No thermal printer detected.\n\nInstalled printers:\n{string.Join("\n", printers)}"
+                    : "No printers found. Please install the Epson TM-T82 driver.";
+                await DisplayAlert("Printer Not Found", msg, "OK");
+                return;
+            }
 
-                // Header — centered
-                await fs.WriteAsync(center);
-                await fs.WriteAsync(enc.GetBytes("The Royal Bakery\n"));
-                await fs.WriteAsync(enc.GetBytes("202, Galle Road, Colombo-06\n"));
-                await fs.WriteAsync(enc.GetBytes("0112 500 991 / 0114 341 642\n"));
-                await fs.WriteAsync(enc.GetBytes("www.theroyalbakery.com\n"));
-                await fs.WriteAsync(enc.GetBytes(Separator('=') + "\n"));
-                await fs.WriteAsync(enc.GetBytes("*** SALES ORDER ***\n"));
-                await fs.WriteAsync(enc.GetBytes(Separator() + "\n"));
+            var enc = Encoding.GetEncoding("IBM437");
+            byte[] init = { 0x1B, 0x40 };
+            byte[] center = { 0x1B, 0x61, 0x01 };
+            byte[] left = { 0x1B, 0x61, 0x00 };
+            byte[] feedCut = { 0x0A, 0x0A, 0x0A, 0x1D, 0x56, 0x41, 0x03 };
 
-                // Body — left aligned
-                await fs.WriteAsync(left);
-                await fs.WriteAsync(enc.GetBytes(Row("Order #:", order.SalesOrderNumber) + "\n"));
-                await fs.WriteAsync(enc.GetBytes(Row("Date:", order.CreatedAt.ToString("dd/MM/yyyy HH:mm")) + "\n"));
-                await fs.WriteAsync(enc.GetBytes(Row("Terminal:", App.TerminalName) + "\n"));
-                if (!string.IsNullOrEmpty(order.CustomerName))
-                    await fs.WriteAsync(enc.GetBytes(Row("Customer:", order.CustomerName) + "\n"));
-                await fs.WriteAsync(enc.GetBytes(Separator() + "\n"));
+            using var ms = new MemoryStream();
 
-                foreach (var item in order.Items)
-                {
-                    var menuItem = _dbContext.MenuItems.Find(item.MenuItemId);
-                    string itemName = menuItem?.Name ?? "Unknown";
-                    await fs.WriteAsync(enc.GetBytes(itemName + "\n"));
-                    await fs.WriteAsync(enc.GetBytes(Row($" {item.Quantity} x {item.PricePerItem:N2}", $"{item.TotalPrice:N2}") + "\n"));
-                }
+            ms.Write(init);
 
-                await fs.WriteAsync(enc.GetBytes(Separator() + "\n"));
-                await fs.WriteAsync(enc.GetBytes(Row("TOTAL", $"LKR {order.TotalAmount:N2}") + "\n"));
-                await fs.WriteAsync(enc.GetBytes(Separator('=') + "\n"));
+            // Header — centered
+            ms.Write(center);
+            ms.Write(enc.GetBytes("The Royal Bakery\n"));
+            ms.Write(enc.GetBytes("202, Galle Road, Colombo-06\n"));
+            ms.Write(enc.GetBytes("0112 500 991 / 0114 341 642\n"));
+            ms.Write(enc.GetBytes("www.theroyalbakery.com\n"));
+            ms.Write(enc.GetBytes(Separator('=') + "\n"));
+            ms.Write(enc.GetBytes("*** SALES ORDER ***\n"));
+            ms.Write(enc.GetBytes(Separator() + "\n"));
 
-                // QR code + footer — centered
-                await fs.WriteAsync(center);
-                byte[] qrBytes = BuildEscPosQR(order.SalesOrderNumber);
-                await fs.WriteAsync(qrBytes);
-                await fs.WriteAsync(enc.GetBytes("\n"));
-                await fs.WriteAsync(enc.GetBytes($"[ {order.SalesOrderNumber} ]\n"));
-                await fs.WriteAsync(enc.GetBytes("Present at cashier for payment\n"));
-                await fs.WriteAsync(enc.GetBytes(Separator() + "\n"));
-                await fs.WriteAsync(enc.GetBytes("Powered by EzyCode\n"));
-                await fs.WriteAsync(enc.GetBytes("www.ezycode.lk\n"));
+            // Body — left aligned
+            ms.Write(left);
+            ms.Write(enc.GetBytes(Row("Order #:", order.SalesOrderNumber) + "\n"));
+            ms.Write(enc.GetBytes(Row("Date:", order.CreatedAt.ToString("dd/MM/yyyy HH:mm")) + "\n"));
+            ms.Write(enc.GetBytes(Row("Terminal:", App.TerminalName) + "\n"));
+            if (!string.IsNullOrEmpty(order.CustomerName))
+                ms.Write(enc.GetBytes(Row("Customer:", order.CustomerName) + "\n"));
+            ms.Write(enc.GetBytes(Separator() + "\n"));
 
-                await fs.WriteAsync(feedCut);
-                await fs.FlushAsync();
+            foreach (var item in order.Items)
+            {
+                var menuItem = _dbContext.MenuItems.Find(item.MenuItemId);
+                string itemName = menuItem?.Name ?? "Unknown";
+                ms.Write(enc.GetBytes(itemName + "\n"));
+                ms.Write(enc.GetBytes(Row($" {item.Quantity} x {item.PricePerItem:N2}", $"{item.TotalPrice:N2}") + "\n"));
+            }
+
+            ms.Write(enc.GetBytes(Separator() + "\n"));
+            ms.Write(enc.GetBytes(Row("TOTAL", $"LKR {order.TotalAmount:N2}") + "\n"));
+            ms.Write(enc.GetBytes(Separator('=') + "\n"));
+
+            // QR code + footer — centered
+            ms.Write(center);
+            byte[] qrBytes = BuildEscPosQR(order.SalesOrderNumber);
+            ms.Write(qrBytes);
+            ms.Write(enc.GetBytes("\n"));
+            ms.Write(enc.GetBytes($"[ {order.SalesOrderNumber} ]\n"));
+            ms.Write(enc.GetBytes("Present at cashier for payment\n"));
+            ms.Write(enc.GetBytes(Separator() + "\n"));
+            ms.Write(enc.GetBytes("Powered by EzyCode\n"));
+            ms.Write(enc.GetBytes("www.ezycode.lk\n"));
+
+            ms.Write(feedCut);
+
+            bool printed = RawPrinterHelper.SendBytesToPrinter(printerName, ms.ToArray());
+            if (!printed)
+            {
+                await DisplayAlert("Print Error",
+                    $"Failed to send data to printer: {printerName}\nPlease check the printer is on and connected.", "OK");
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Print Error", $"Could not print: {ex.Message}", "OK");
+        }
     }
 
     /// <summary>

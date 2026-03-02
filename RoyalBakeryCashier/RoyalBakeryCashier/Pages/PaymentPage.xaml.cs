@@ -1,5 +1,6 @@
 using RoyalBakeryCashier.Data;
 using RoyalBakeryCashier.Data.Entities;
+using RoyalBakeryCashier.Helpers;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 
@@ -267,6 +268,7 @@ public partial class PaymentPage : ContentPage
         string Separator(char c = '-') => new string(c, W);
         string Row(string left, string right) => left + right.PadLeft(W - left.Length);
 
+        // Save receipt as text backup
         try
         {
             string receiptDir = Path.Combine(FileSystem.AppDataDirectory, "receipts");
@@ -279,73 +281,89 @@ public partial class PaymentPage : ContentPage
 
         try
         {
-            string printerPath = Preferences.Get("ThermalPrinterPath", "");
-            if (string.IsNullOrEmpty(printerPath))
+            // Find the printer: check saved preference first, then auto-detect
+            string printerName = Preferences.Get("ThermalPrinterName", "");
+            if (string.IsNullOrEmpty(printerName))
             {
-                var candidates = new[] { "EPSON", "EPSON TM", "Receipt", "POS" };
-                foreach (var name in candidates)
-                {
-                    string testPath = $@"\\localhost\{name}";
-                    if (File.Exists(testPath) || Directory.Exists(testPath))
-                    { printerPath = testPath; break; }
-                }
+                printerName = RawPrinterHelper.FindThermalPrinter() ?? "";
+                if (!string.IsNullOrEmpty(printerName))
+                    Preferences.Set("ThermalPrinterName", printerName);
             }
 
-            if (!string.IsNullOrEmpty(printerPath))
+            if (string.IsNullOrEmpty(printerName))
             {
-                var enc = Encoding.GetEncoding("IBM437");
-                byte[] init = { 0x1B, 0x40 };
-                byte[] center = { 0x1B, 0x61, 0x01 };
-                byte[] left = { 0x1B, 0x61, 0x00 };
-                byte[] feedCut = { 0x0A, 0x0A, 0x0A, 0x1D, 0x56, 0x41, 0x03 };
+                // Show available printers so user knows what to pick
+                var printers = RawPrinterHelper.GetInstalledPrinters();
+                string msg = printers.Count > 0
+                    ? $"No thermal printer detected.\n\nInstalled printers:\n{string.Join("\n", printers)}\n\nPlease set printer name in Settings."
+                    : "No printers found. Please install the Epson TM-T82 driver.";
+                await DisplayAlert("Printer Not Found", msg, "OK");
+                return;
+            }
 
-                using var fs = new FileStream(printerPath, FileMode.Open, FileAccess.Write);
-                await fs.WriteAsync(init);
+            var enc = Encoding.GetEncoding("IBM437");
+            byte[] init = { 0x1B, 0x40 };
+            byte[] center = { 0x1B, 0x61, 0x01 };
+            byte[] left = { 0x1B, 0x61, 0x00 };
+            byte[] feedCut = { 0x0A, 0x0A, 0x0A, 0x1D, 0x56, 0x41, 0x03 };
 
-                // Header — printer centers these
-                await fs.WriteAsync(center);
-                await fs.WriteAsync(enc.GetBytes("The Royal Bakery\n"));
-                await fs.WriteAsync(enc.GetBytes("202, Galle Road, Colombo-06\n"));
-                await fs.WriteAsync(enc.GetBytes("0112 500 991 / 0114 341 642\n"));
-                await fs.WriteAsync(enc.GetBytes("www.theroyalbakery.com\n"));
-                await fs.WriteAsync(enc.GetBytes(Separator('=') + "\n"));
+            using var ms = new MemoryStream();
 
-                // Body — left aligned rows
-                await fs.WriteAsync(left);
-                await fs.WriteAsync(enc.GetBytes(Row("Invoice #:", sale.InvoiceNumber) + "\n"));
-                await fs.WriteAsync(enc.GetBytes(Row("Date:", sale.DateTime.ToString("dd/MM/yyyy HH:mm")) + "\n"));
-                await fs.WriteAsync(enc.GetBytes(Row("Cashier:", sale.CashierName ?? "Cashier") + "\n"));
-                await fs.WriteAsync(enc.GetBytes(Separator() + "\n"));
+            ms.Write(init);
 
-                foreach (var item in sale.Items)
-                {
-                    await fs.WriteAsync(enc.GetBytes(item.ItemName + "\n"));
-                    await fs.WriteAsync(enc.GetBytes(Row($"  {item.Quantity} x LKR {item.PricePerItem:N2}", $"LKR {item.TotalPrice:N2}") + "\n"));
-                }
+            // Header — centered
+            ms.Write(center);
+            ms.Write(enc.GetBytes("The Royal Bakery\n"));
+            ms.Write(enc.GetBytes("202, Galle Road, Colombo-06\n"));
+            ms.Write(enc.GetBytes("0112 500 991 / 0114 341 642\n"));
+            ms.Write(enc.GetBytes("www.theroyalbakery.com\n"));
+            ms.Write(enc.GetBytes(Separator('=') + "\n"));
 
-                await fs.WriteAsync(enc.GetBytes(Separator() + "\n"));
-                await fs.WriteAsync(enc.GetBytes(Row("Subtotal", $"LKR {sale.TotalAmount:N2}") + "\n"));
-                await fs.WriteAsync(enc.GetBytes(Separator('=') + "\n"));
-                await fs.WriteAsync(enc.GetBytes(Row("TOTAL", $"LKR {sale.TotalAmount:N2}") + "\n"));
-                await fs.WriteAsync(enc.GetBytes(Separator() + "\n"));
+            // Body — left aligned
+            ms.Write(left);
+            ms.Write(enc.GetBytes(Row("Invoice #:", sale.InvoiceNumber) + "\n"));
+            ms.Write(enc.GetBytes(Row("Date:", sale.DateTime.ToString("dd/MM/yyyy HH:mm")) + "\n"));
+            ms.Write(enc.GetBytes(Row("Cashier:", sale.CashierName ?? "Cashier") + "\n"));
+            ms.Write(enc.GetBytes(Separator() + "\n"));
 
-                if (cash > 0) await fs.WriteAsync(enc.GetBytes(Row("Cash", $"LKR {cash:N2}") + "\n"));
-                if (card > 0) await fs.WriteAsync(enc.GetBytes(Row("Card", $"LKR {card:N2}") + "\n"));
-                await fs.WriteAsync(enc.GetBytes(Row("Change", $"LKR {change:N2}") + "\n"));
-                await fs.WriteAsync(enc.GetBytes(Separator() + "\n"));
+            foreach (var item in sale.Items)
+            {
+                ms.Write(enc.GetBytes(item.ItemName + "\n"));
+                ms.Write(enc.GetBytes(Row($"  {item.Quantity} x LKR {item.PricePerItem:N2}", $"LKR {item.TotalPrice:N2}") + "\n"));
+            }
 
-                // Footer — printer centers these
-                await fs.WriteAsync(center);
-                await fs.WriteAsync(enc.GetBytes("Thank you for your purchase!\n"));
-                await fs.WriteAsync(enc.GetBytes("Please come again\n"));
-                await fs.WriteAsync(enc.GetBytes(Separator('=') + "\n"));
-                await fs.WriteAsync(enc.GetBytes("Powered by EzyCode\n"));
-                await fs.WriteAsync(enc.GetBytes("www.ezycode.lk\n"));
+            ms.Write(enc.GetBytes(Separator() + "\n"));
+            ms.Write(enc.GetBytes(Row("Subtotal", $"LKR {sale.TotalAmount:N2}") + "\n"));
+            ms.Write(enc.GetBytes(Separator('=') + "\n"));
+            ms.Write(enc.GetBytes(Row("TOTAL", $"LKR {sale.TotalAmount:N2}") + "\n"));
+            ms.Write(enc.GetBytes(Separator() + "\n"));
 
-                await fs.WriteAsync(feedCut);
-                await fs.FlushAsync();
+            if (cash > 0) ms.Write(enc.GetBytes(Row("Cash", $"LKR {cash:N2}") + "\n"));
+            if (card > 0) ms.Write(enc.GetBytes(Row("Card", $"LKR {card:N2}") + "\n"));
+            ms.Write(enc.GetBytes(Row("Change", $"LKR {change:N2}") + "\n"));
+            ms.Write(enc.GetBytes(Separator() + "\n"));
+
+            // Footer — centered
+            ms.Write(center);
+            ms.Write(enc.GetBytes("Thank you for your purchase!\n"));
+            ms.Write(enc.GetBytes("Please come again\n"));
+            ms.Write(enc.GetBytes(Separator('=') + "\n"));
+            ms.Write(enc.GetBytes("Powered by EzyCode\n"));
+            ms.Write(enc.GetBytes("www.ezycode.lk\n"));
+
+            ms.Write(feedCut);
+
+            // Send raw bytes to printer via Windows Print Spooler API
+            bool printed = RawPrinterHelper.SendBytesToPrinter(printerName, ms.ToArray());
+            if (!printed)
+            {
+                await DisplayAlert("Print Error",
+                    $"Failed to send data to printer: {printerName}\nPlease check the printer is on and connected.", "OK");
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Print Error", $"Could not print: {ex.Message}", "OK");
+        }
     }
 }
